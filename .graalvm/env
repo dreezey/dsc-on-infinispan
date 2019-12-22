@@ -1,0 +1,2 @@
+export GRAALVM_HOME=/usr/lib/jvm/java-11-graalvm/
+export JAVA_HOME=$GRAALVM_HOME
