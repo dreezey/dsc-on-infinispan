@@ -16,7 +16,7 @@ public class ChangeSessionRequest {
     private String replica;
     @XmlElement(namespace = DsessConstants.SMS_NS)
     private String replicaSet;
-    @XmlElement(namespace = DsessConstants.SMS_NS)
+    @XmlElement(name = "sessionID", namespace = DsessConstants.SMS_NS)
     private String sessionId;
     @XmlElement(namespace = DsessConstants.SMS_NS)
     private int version;
@@ -94,5 +94,18 @@ public class ChangeSessionRequest {
 
     public void setData(List<SessionDataRequest> data) {
         this.data = data;
+    }
+
+    @Override
+    public String toString() {
+        return "ChangeSessionRequest{" +
+                "replica='" + replica + '\'' +
+                ", replicaSet='" + replicaSet + '\'' +
+                ", sessionId='" + sessionId + '\'' +
+                ", version=" + version +
+                ", push=" + push +
+                ", sessionLimit=" + sessionLimit +
+                ", data=" + data +
+                '}';
     }
 }

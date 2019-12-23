@@ -157,8 +157,7 @@ public class DSessResource {
         LOG.entering(DSessResource.class.getName(), "changeSession");
 
         return CompletableFuture.supplyAsync(() -> {
-            // TODO implement session update
-            return Response.status(200).entity(new ChangeSessionResponse()).build();
+            return DSessService.changeSession(changeSessionRequest);
         });
     }
 }

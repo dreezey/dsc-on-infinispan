@@ -178,6 +178,76 @@ public class DSessService {
                 .build();
     }
 
+    public Response changeSession(ChangeSessionRequest changeSessionRequest) {
+        LOG.finest(changeSessionRequest.toString());
+        if (changeSessionRequest.getData() == null) {
+            LOG.warning("Updating a session with new data, ignoring request...");
+            return Response
+                    .status(200)
+                    .entity(constructChangeSessionResponse(changeSessionRequest.getVersion(), false))
+                    .build();
+        }
+        String sessionId = changeSessionRequest.getSessionId();
+        MetadataValue<Session> cachedSessionWithMetadata = getSessionFromCacheWithMetadata(sessionId);
+
+        ChangeSessionReturn changeSessionReturn;
+        ChangeSessionResponse changeSessionResponse;
+        if (cachedSessionWithMetadata != null) {
+            LOG.finest("Found a session in cache for key: " + sessionId);
+            Session cachedSession = cachedSessionWithMetadata.getValue();
+            if (cachedSession.getReplicaSet().equalsIgnoreCase(changeSessionRequest.getReplicaSet())) {
+                // replica set matches
+                Session updatedSession = Session.shallowCopy(cachedSession);
+                // Update normal properties first
+                updatedSession.setSessionLimit(changeSessionRequest.getSessionLimit());
+                // And now we'll update the data
+                for (SessionDataRequest sessionDataRequest : changeSessionRequest.getData()) {
+                    int indexToModify = findIndexOfSessionAttribute(updatedSession.getSessionData(), sessionDataRequest.getDataClass());
+                    if (indexToModify == -1) continue;
+                    updatedSession.getSessionData().set(indexToModify, sessionDataRequest);
+                }
+                // And finally update the remote cache
+                sessionsRemoteCache.replace(sessionId, updatedSession, cachedSessionWithMetadata.getLifespan(), TimeUnit.SECONDS);
+                // Prepare the ChangeSessionResponse
+                changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), true);
+//                changeSessionReturn = new ChangeSessionReturn(changeSessionRequest.getVersion() + 1);
+            } else {
+//                changeSessionReturn = new ChangeSessionReturn(changeSessionRequest.getVersion());
+                changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), false);
+                LOG.warning("Attempted to change session with '" + sessionId + "', but requested replica set is different, ignoring.");
+            }
+        } else {
+            LOG.finest("No associated session was found for key: " + sessionId);
+//            changeSessionReturn = new ChangeSessionReturn(changeSessionRequest.getVersion());
+            changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), false);
+        }
+
+        return Response
+                .status(200)
+                .entity(changeSessionResponse)
+                .build();
+    }
+
+    private int findIndexOfSessionAttribute(ArrayList<SessionData> sourceSessionData, String dataClass) {
+        for (int i=0; i < sourceSessionData.size(); i++) {
+            SessionData sessionData = sourceSessionData.get(i);
+            if (sessionData.getDataClass().equalsIgnoreCase(dataClass)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private ChangeSessionResponse constructChangeSessionResponse(int version, boolean updated) {
+        ChangeSessionReturn changeSessionReturn;
+        if (updated) {
+            changeSessionReturn = new ChangeSessionReturn(version);
+        } else {
+            changeSessionReturn = new ChangeSessionReturn(version + 1);
+        }
+        return new ChangeSessionResponse(changeSessionReturn);
+    }
+
     private GetSessionResponse constructEmptyGetSessionResponse() {
         GetSessionReturn getSessionReturn = new GetSessionReturn(
                 0,
