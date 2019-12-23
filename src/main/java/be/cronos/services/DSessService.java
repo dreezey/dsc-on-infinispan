@@ -4,6 +4,7 @@ import be.cronos.DsessConstants;
 import be.cronos.model.*;
 import be.cronos.model.ispn.Replica;
 import be.cronos.model.ispn.Session;
+import be.cronos.model.ispn.SessionData;
 import io.quarkus.infinispan.client.Remote;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -72,6 +73,51 @@ public class DSessService {
                 .build();
     }
 
+    public Response getSession(GetSessionRequest getSessionRequest) {
+        String sessionId = getSessionRequest.getSessionId();
+        Session cachedSession = getSessionFromCache(sessionId);
+        GetSessionResponse getSessionResponse;
+        if (cachedSession == null) {
+            LOG.finest("no cached session found with ID: " + sessionId);
+            getSessionResponse = constructEmptyGetSessionResponse();
+        } else {
+            LOG.finest("Session found in cache: " + sessionId);
+            if (getSessionRequest.getReplicaSet().equalsIgnoreCase(cachedSession.getReplicaSet())) {
+                LOG.finest("Requested replicaset matches cached replicaset: " + cachedSession.getReplicaSet());
+                LOG.finest("Returning valid session response.");
+                ArrayList<GetSessionDataReturn> getSessionDataReturn = new ArrayList<>();
+                cachedSession.getSessionData().forEach(sessionData -> {
+                    getSessionDataReturn.add(new GetSessionDataReturn(
+                            sessionData.getDataClass(),
+                            sessionData.getValue(),
+                            sessionData.getInstance(),
+                            sessionData.getChangePolicy()
+                    ));
+                });
+                GetSessionReturn getSessionReturn = new GetSessionReturn(
+                        0,
+                        getSessionDataReturn
+                );
+                getSessionResponse = new GetSessionResponse(getSessionReturn);
+            } else {
+                LOG.warning("Requested session ID was found, but the replica set does not match, returning empty response.");
+                getSessionResponse = constructEmptyGetSessionResponse();
+            }
+        }
+        return Response
+                .status(200)
+                .entity(getSessionResponse)
+                .build();
+    }
+
+    private GetSessionResponse constructEmptyGetSessionResponse() {
+        GetSessionReturn getSessionReturn = new GetSessionReturn(
+                0,
+                null
+        );
+        return new GetSessionResponse(getSessionReturn);
+    }
+
     private Replica attemptCacheReplica(JoinReplicaSetRequest joinReplicaSetRequest) {
         String replicaName = joinReplicaSetRequest.getReplica();
         Replica cachedReplica = replicasRemoteCache.get(replicaName);
@@ -126,6 +172,10 @@ public class DSessService {
 //                    .withFlags(Flag.FORCE_RETURN_VALUE) //this will make sure a value is returned, at the cost of marshalling
                     .putIfAbsent(sessionId, cachedSession, lifetime, TimeUnit.SECONDS);
         }
+    }
+
+    private Session getSessionFromCache(String sessionId) {
+        return sessionsRemoteCache.get(sessionId);
     }
 
     private List<Replica> searchReplicasByReplicaSet(String replicaSet) {

@@ -120,8 +120,7 @@ public class DSessResource {
         LOG.entering(DSessResource.class.getName(), "getSession");
 
         return CompletableFuture.supplyAsync(() -> {
-            // TODO implement session fetching
-            return Response.status(200).entity(new GetSessionResponse()).build();
+            return DSessService.getSession(getSessionRequest);
         });
     }
 

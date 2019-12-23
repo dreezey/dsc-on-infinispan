@@ -3,11 +3,20 @@ package be.cronos.model;
 import be.cronos.DsessConstants;
 import be.cronos.model.ispn.SessionData;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.*;
 
 //@XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
-@XmlRootElement(name = "data", namespace = DsessConstants.SMS_NS)
+//@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlType(
+        name = "data",
+        propOrder = {
+                "value",
+                "dataClass",
+                "instance"
+        },
+        namespace = DsessConstants.SMS_NS
+)
+//@XmlRootElement(name = "data", namespace = DsessConstants.SMS_NS)
 public class GetSessionDataReturn extends SessionData {
 
     public GetSessionDataReturn() {

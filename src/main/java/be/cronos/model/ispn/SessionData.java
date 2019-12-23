@@ -3,6 +3,7 @@ package be.cronos.model.ispn;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.Objects;
 
 public class SessionData {
@@ -33,6 +34,7 @@ public class SessionData {
 //    }
 
     @ProtoField(number = 1)
+    @XmlTransient
     public String getDataClass() {
         return dataClass;
     }
@@ -42,6 +44,7 @@ public class SessionData {
     }
 
     @ProtoField(number = 2)
+    @XmlTransient
     public String getValue() {
         return value;
     }
@@ -51,6 +54,7 @@ public class SessionData {
     }
 
     @ProtoField(number = 3)
+    @XmlTransient
     public String getInstance() {
         return instance;
     }
@@ -60,6 +64,7 @@ public class SessionData {
     }
 
     @ProtoField(number = 4, defaultValue = "1")
+    @XmlTransient
     public int getChangePolicy() {
         return changePolicy;
     }
