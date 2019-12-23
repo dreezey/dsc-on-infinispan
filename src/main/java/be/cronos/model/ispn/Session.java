@@ -24,6 +24,15 @@ public class Session {
         this.sessionData = Objects.requireNonNull(sessionData);
     }
 
+    public static Session shallowCopy(Session sourceSession) {
+        return new Session(
+                sourceSession.sessionId,
+                sourceSession.replicaSet,
+                sourceSession.sessionLimit,
+                sourceSession.getSessionData()
+        );
+    }
+
     @ProtoField(number = 1)
     public String getSessionId() {
         return sessionId;

@@ -11,4 +11,5 @@ public interface DsessConstants {
     String SESSION_INSTANCE = "sms";
     String REALM_NAME = "ISAM-Distributed-Session-Cache";
     String INACTIVITY_TIMEOUT = "com.tivoli.am.webseal.inactivity-timeout";
+    String IS_INACTIVE_DATACLASS = "com.tivoli.am.eb.is-inactive";
 }

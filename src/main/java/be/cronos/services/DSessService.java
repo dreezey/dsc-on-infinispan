@@ -6,9 +6,7 @@ import be.cronos.model.ispn.Replica;
 import be.cronos.model.ispn.Session;
 import be.cronos.model.ispn.SessionData;
 import io.quarkus.infinispan.client.Remote;
-import org.infinispan.client.hotrod.Flag;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
+import org.infinispan.client.hotrod.*;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.jboss.logmanager.Logger;
@@ -110,6 +108,52 @@ public class DSessService {
                 .build();
     }
 
+    public Response idleTimeout(IdleTimeoutRequest idleTimeoutRequest) {
+        String sessionId = idleTimeoutRequest.getSessionId();
+        MetadataValue<Session> cachedSessionWithMetadata = getSessionFromCacheWithMetadata(sessionId);
+
+        if (cachedSessionWithMetadata != null) {
+            // Get the session data
+            Session cachedSession = cachedSessionWithMetadata.getValue();
+            // Make a copy of the cached session
+            Session updatedSession = Session.shallowCopy(cachedSession);
+            boolean sessionUpdated = false;
+            for (int i=0; i < cachedSession.getSessionData().size(); i++) {
+                SessionData sessionData = cachedSession.getSessionData().get(i);
+                if (sessionData.getDataClass().equalsIgnoreCase(DsessConstants.IS_INACTIVE_DATACLASS)) {
+                    if (sessionData.getValue().equalsIgnoreCase("true")) {
+                        LOG.info("Session already marked as inactive");
+                        break;
+                    }
+                    LOG.info("Marking as inactive");
+                    sessionData.setValue("true");
+                    updatedSession.getSessionData().set(i, sessionData);
+                    sessionUpdated = true;
+                    break;
+                }
+            }
+
+            if (sessionUpdated) {
+                //TODO still resets the timer to the original value, may need to review how to properly handle lifetime
+                sessionsRemoteCache
+//                    .withFlags(Flag.FORCE_RETURN_VALUE) // don't force return value to prevent unnecessary (un)marshalling
+                        .replace(
+                                sessionId,
+                                updatedSession,
+                                cachedSessionWithMetadata.getLifespan(),
+                                TimeUnit.SECONDS
+                        );
+            }
+        } else {
+            LOG.info("no session found in cache");
+        }
+
+        return Response
+                .status(200)
+                .entity(new IdleTimeoutResponse())
+                .build();
+    }
+
     private GetSessionResponse constructEmptyGetSessionResponse() {
         GetSessionReturn getSessionReturn = new GetSessionReturn(
                 0,
@@ -176,6 +220,10 @@ public class DSessService {
 
     private Session getSessionFromCache(String sessionId) {
         return sessionsRemoteCache.get(sessionId);
+    }
+
+    private MetadataValue<Session> getSessionFromCacheWithMetadata(String sessionId) {
+        return sessionsRemoteCache.getWithMetadata(sessionId);
     }
 
     private List<Replica> searchReplicasByReplicaSet(String replicaSet) {

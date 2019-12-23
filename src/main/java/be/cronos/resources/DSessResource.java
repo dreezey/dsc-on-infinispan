@@ -132,8 +132,7 @@ public class DSessResource {
         LOG.entering(DSessResource.class.getName(), "idleTimeout");
 
         return CompletableFuture.supplyAsync(() -> {
-            // TODO implement session idling
-            return Response.status(200).entity(new IdleTimeoutResponse()).build();
+            return DSessService.idleTimeout(idleTimeoutRequest);
         });
     }
 
