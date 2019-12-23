@@ -1,9 +1,11 @@
 package be.cronos.services;
 
+import be.cronos.DsessConstants;
 import be.cronos.model.*;
 import be.cronos.model.ispn.Replica;
 import be.cronos.model.ispn.Session;
 import io.quarkus.infinispan.client.Remote;
+import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.query.dsl.Query;
@@ -13,7 +15,10 @@ import org.jboss.logmanager.Logger;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 @ApplicationScoped
 public class DSessService {
@@ -58,6 +63,15 @@ public class DSessService {
                 .build();
     }
 
+    public Response createSession(CreateSessionRequest createSessionRequest) {
+        Session newSession = cacheSession(createSessionRequest);
+        LOG.info("session info = " + newSession);
+        return Response
+                .status(200)
+                .entity(new CreateSessionResponse())
+                .build();
+    }
+
     private Replica attemptCacheReplica(JoinReplicaSetRequest joinReplicaSetRequest) {
         String replicaName = joinReplicaSetRequest.getReplica();
         Replica cachedReplica = replicasRemoteCache.get(replicaName);
@@ -74,6 +88,44 @@ public class DSessService {
 
     private Replica shutdownReplica(String replicaName) {
         return replicasRemoteCache.remove(replicaName);
+    }
+
+    private Session cacheSession(CreateSessionRequest createSessionRequest) {
+        String sessionId = createSessionRequest.getSessionId();
+        LOG.finest("sessionid = " + sessionId);
+        // Get the session inactivity timeout first
+        AtomicReference<String> sessionInactivityTimeout = new AtomicReference<>();
+        createSessionRequest.getData().forEach(sessionDataRequest -> {
+            if (sessionDataRequest.getDataClass().equalsIgnoreCase(DsessConstants.INACTIVITY_TIMEOUT)) {
+                sessionInactivityTimeout.set(sessionDataRequest.getValue());
+            }
+        });
+        // Parse the session inactivity to a long
+        long lifetime = 0L;
+        try {
+            lifetime = Long.parseLong(sessionInactivityTimeout.get().replaceFirst("0x", ""), 16);
+        } catch (NumberFormatException ignored) {
+
+        }
+        LOG.finest("use session lifetime of " + lifetime);
+
+        // Construct the Session Object to be stored in Infinispan
+        Session cachedSession = new Session(
+                createSessionRequest.getSessionId(),
+                createSessionRequest.getReplicaSet(),
+                createSessionRequest.getSessionLimit(),
+                new ArrayList<>(createSessionRequest.getData())
+        );
+
+        if (lifetime == 0L) {
+            return sessionsRemoteCache
+//                    .withFlags(Flag.FORCE_RETURN_VALUE) //this will make sure a value is returned, at the cost of marshalling
+                    .putIfAbsent(sessionId, cachedSession);
+        } else {
+            return sessionsRemoteCache
+//                    .withFlags(Flag.FORCE_RETURN_VALUE) //this will make sure a value is returned, at the cost of marshalling
+                    .putIfAbsent(sessionId, cachedSession, lifetime, TimeUnit.SECONDS);
+        }
     }
 
     private List<Replica> searchReplicasByReplicaSet(String replicaSet) {

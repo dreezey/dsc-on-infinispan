@@ -16,7 +16,7 @@ public class CreateSessionRequest {
     private String replica;
     @XmlElement(namespace = DsessConstants.SMS_NS)
     private String replicaSet;
-    @XmlElement(namespace = DsessConstants.SMS_NS)
+    @XmlElement(name = "sessionID",namespace = DsessConstants.SMS_NS)
     private String sessionId;
     @XmlElement(namespace = DsessConstants.SMS_NS)
     private int sessionLimit;

@@ -11,7 +11,10 @@ public class Session {
     private String sessionId;
     private String replicaSet;
     private int sessionLimit;
-    private List<SessionData> sessionData;
+    private ArrayList<SessionData> sessionData;
+
+    public Session() {
+    }
 
     @ProtoFactory
     public Session(String sessionId, String replicaSet, int sessionLimit, ArrayList<SessionData> sessionData) {
@@ -40,7 +43,7 @@ public class Session {
     }
 
     @ProtoField(number = 3, collectionImplementation = ArrayList.class)
-    public List<SessionData> getSessionData() {
+    public ArrayList<SessionData> getSessionData() {
         return sessionData;
     }
 

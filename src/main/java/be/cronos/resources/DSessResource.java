@@ -107,12 +107,8 @@ public class DSessResource {
     public CompletionStage<Response> createSession(CreateSessionRequest createSessionRequest) {
         LOG.entering(DSessResource.class.getName(), "createSession");
 
-        LOG.info("session data size = " + createSessionRequest.getData().size());
-        LOG.info("session data [0] = " + createSessionRequest.getData().get(0).getValue());
-
         return CompletableFuture.supplyAsync(() -> {
-            // TODO implement session creation
-            return Response.status(200).entity(new CreateSessionResponse()).build();
+            return DSessService.createSession(createSessionRequest);
         });
     }
 

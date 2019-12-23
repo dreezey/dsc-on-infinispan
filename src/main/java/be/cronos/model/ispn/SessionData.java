@@ -18,7 +18,7 @@ public class SessionData {
     public SessionData(String dataClass, String value, String instance, int changePolicy) {
 //        this.sessionId = Objects.requireNonNull(sessionId);
         this.dataClass = Objects.requireNonNull(dataClass);
-        this.value = Objects.requireNonNull(value);
+        this.value = value;
         this.instance = Objects.requireNonNull(instance);
         this.changePolicy = changePolicy;
     }
@@ -66,5 +66,15 @@ public class SessionData {
 
     public void setChangePolicy(int changePolicy) {
         this.changePolicy = changePolicy;
+    }
+
+    @Override
+    public String toString() {
+        return "SessionData{" +
+                "dataClass='" + dataClass + '\'' +
+                ", value='" + value + '\'' +
+                ", instance='" + instance + '\'' +
+                ", changePolicy=" + changePolicy +
+                '}';
     }
 }

@@ -10,4 +10,5 @@ public interface DsessConstants {
     String CUSTOM_XML_MIMETYPE = "custom/xml";
     String SESSION_INSTANCE = "sms";
     String REALM_NAME = "ISAM-Distributed-Session-Cache";
+    String INACTIVITY_TIMEOUT = "com.tivoli.am.webseal.inactivity-timeout";
 }
