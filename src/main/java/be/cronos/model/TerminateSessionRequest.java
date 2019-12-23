@@ -15,7 +15,7 @@ public class TerminateSessionRequest {
     private String replica;
     @XmlElement(namespace = DsessConstants.SMS_NS)
     private String replicaSet;
-    @XmlElement(namespace = DsessConstants.SMS_NS)
+    @XmlElement(name = "sessionID", namespace = DsessConstants.SMS_NS)
     private String sessionId;
     @XmlElement(namespace = DsessConstants.SMS_NS)
     private int level;
@@ -82,5 +82,17 @@ public class TerminateSessionRequest {
 
     public void setReason(int reason) {
         this.reason = reason;
+    }
+
+    @Override
+    public String toString() {
+        return "TerminateSessionRequest{" +
+                "replica='" + replica + '\'' +
+                ", replicaSet='" + replicaSet + '\'' +
+                ", sessionId='" + sessionId + '\'' +
+                ", level=" + level +
+                ", version=" + version +
+                ", reason=" + reason +
+                '}';
     }
 }

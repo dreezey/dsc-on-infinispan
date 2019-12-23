@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 
 @ApplicationScoped
 public class DSessService {
@@ -151,6 +152,29 @@ public class DSessService {
         return Response
                 .status(200)
                 .entity(new IdleTimeoutResponse())
+                .build();
+    }
+
+    public Response terminateSession(TerminateSessionRequest terminateSessionRequest) {
+        // TODO when terminating a session, it should be added to a graveyard of some sort to let "getUpdates" know.
+        LOG.finest("Incoming TerminateSessionRequest: " + terminateSessionRequest.toString());
+        String sessionId = terminateSessionRequest.getSessionId();
+        Session cachedSession = getSessionFromCache(sessionId);
+
+        if (cachedSession != null) {
+            LOG.finest("There's a session in cache, preparing to delete");
+            if (cachedSession.getReplicaSet().equalsIgnoreCase(terminateSessionRequest.getReplicaSet())) {
+                LOG.finest("Removing session: " + sessionId);
+                sessionsRemoteCache.remove(sessionId);
+            } else {
+                LOG.warning("Termination of session with id '" + sessionId + "' failed because the replica sets do not match.");
+            }
+        }
+        TerminateSessionReturn terminateSessionReturn = new TerminateSessionReturn(terminateSessionRequest.getVersion());
+        TerminateSessionResponse terminateSessionResponse = new TerminateSessionResponse(terminateSessionReturn);
+        return Response
+                .status(200)
+                .entity(terminateSessionResponse)
                 .build();
     }
 

@@ -141,11 +141,11 @@ public class DSessResource {
     @Consumes(MediaType.TEXT_XML)
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
     public CompletionStage<Response> terminateSession(TerminateSessionRequest terminateSessionRequest) {
-        LOG.entering(DSessResource.class.getName(), "idleTimeout");
+        LOG.entering(DSessResource.class.getName(), "terminateSession");
 
         return CompletableFuture.supplyAsync(() -> {
             // TODO implement session termination
-            return Response.status(200).entity(new TerminateSessionResponse(terminateSessionRequest.getVersion())).build();
+            return DSessService.terminateSession(terminateSessionRequest);
         });
     }
 
