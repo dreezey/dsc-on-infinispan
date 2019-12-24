@@ -33,3 +33,6 @@ pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
 release.properties
+
+# Elytron Properties File Config
+src/main/resources/dsess-users.properties

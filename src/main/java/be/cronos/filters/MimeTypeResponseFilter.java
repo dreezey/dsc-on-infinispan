@@ -20,10 +20,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Provider
 public class MimeTypeResponseFilter implements ContainerResponseFilter {
     private static final Logger LOG = Logger.getLogger(MimeTypeResponseFilter.class.getName());
+
     @Override
-    public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) throws IOException {
+    public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) {
         LOG.finest("content types = " + responseContext.getHeaders().get("Content-Type"));
         List<Object> contentTypes = responseContext.getHeaders().get("Content-Type");
+        if (contentTypes == null) {
+            LOG.fine("Could not find 'Content-Type' in response, probably something else failed.");
+            return;
+        }
         AtomicBoolean overrideMimeType = new AtomicBoolean(false);
         contentTypes.forEach(contentType -> {
             if (contentType instanceof MediaType) {

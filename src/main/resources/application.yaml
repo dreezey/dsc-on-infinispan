@@ -1,0 +1,15 @@
+quarkus:
+  http:
+    auth:
+      basic: true
+  security:
+    users:
+      file:
+        enabled: true
+        realm-name: dsess
+        # dsess-users.properties is not included in Git, but should look something like:
+        #   ispn-dsc-webseald=F5C702BF67EA1A8E2F661F5058D31025
+        #   ispn-dsc-webseald2=88C539A3013194199CC2C9E6412458D1
+        # you can get the MD5 using: `echo -n ispn-dsc-webseald:dsess:ds3ss | md5`
+        users: dsess-users.properties
+        roles: dsess-roles.properties

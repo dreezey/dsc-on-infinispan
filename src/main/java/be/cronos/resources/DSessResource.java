@@ -7,6 +7,8 @@ import be.cronos.services.PingService;
 import be.cronos.services.DSessService;
 import org.jboss.logmanager.Logger;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
@@ -16,6 +18,7 @@ import javax.ws.rs.core.Response;
 import java.util.concurrent.*;
 
 @Path("/DSess")
+@RolesAllowed("replica")
 public class DSessResource {
     private static final Logger LOG = Logger.getLogger(DSessResource.class.getName());
 
@@ -29,6 +32,7 @@ public class DSessResource {
     @Path("health")
     @GET
     @Produces(MediaType.TEXT_XML)
+    @PermitAll // This is for future k8s health probes
     public CompletionStage<String> health() {
         return CompletableFuture.supplyAsync(() -> {
             return "healthy";
@@ -39,6 +43,7 @@ public class DSessResource {
     @POST
     @Consumes(MediaType.TEXT_XML)
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
+    @PermitAll // Everyone should be able to ping...
     public CompletionStage<Response> ping(PingRequest pingRequest) {
         LOG.entering(DSessResource.class.getName(), "ping");
         LOG.finest(pingRequest.toString());
