@@ -60,4 +60,14 @@ public class JoinReplicaSetRequest {
     public void setReplicaSet(String replicaSet) {
         this.replicaSet = replicaSet;
     }
+
+    @Override
+    public String toString() {
+        return "JoinReplicaSetRequest{" +
+                "replica='" + replica + '\'' +
+                ", instance='" + instance + '\'' +
+                ", capabilities=" + capabilities +
+                ", replicaSet='" + replicaSet + '\'' +
+                '}';
+    }
 }

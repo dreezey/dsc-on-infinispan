@@ -15,7 +15,6 @@ public class GetUpdatesService {
     public Response getUpdates(GetUpdatesRequest getUpdatesRequest) {
         // At some point, this will look in a graveyard of sort to detect terminated sessions
         LOG.entering(CN, "getUpdates");
-        LOG.info("replica = " + getUpdatesRequest.getReplica());
         return Response
                 .status(200)
                 .entity(new GetUpdatesResponse())

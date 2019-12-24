@@ -7,22 +7,17 @@ import be.cronos.model.ispn.Session;
 import be.cronos.model.ispn.SessionData;
 import io.quarkus.infinispan.client.Remote;
 import org.infinispan.client.hotrod.*;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.jboss.logmanager.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
 
 @ApplicationScoped
 public class DSessService {
-    private final String CN = this.getClass().getName();
     private static final Logger LOG = Logger.getLogger(DSessService.class.getName());
 
     // Cache should first be added in Infinispan, otherwise you get "org.infinispan.server.hotrod.CacheNotFoundException"
@@ -46,9 +41,9 @@ public class DSessService {
         Replica removedReplica = shutdownReplica(replicaShutdownRequest.getReplica());
 
         if (removedReplica == null) {
-            LOG.info("replica was not in cache anyway");
+            LOG.finest("replica was not in cache anyway");
         } else {
-            LOG.info("replica removed from cache.");
+            LOG.finest("replica removed from cache.");
         }
         return Response
                 .status(200)
@@ -65,7 +60,6 @@ public class DSessService {
 
     public Response createSession(CreateSessionRequest createSessionRequest) {
         Session newSession = cacheSession(createSessionRequest);
-        LOG.info("session info = " + newSession);
         return Response
                 .status(200)
                 .entity(new CreateSessionResponse())
@@ -123,10 +117,10 @@ public class DSessService {
                 SessionData sessionData = cachedSession.getSessionData().get(i);
                 if (sessionData.getDataClass().equalsIgnoreCase(DsessConstants.IS_INACTIVE_DATACLASS)) {
                     if (sessionData.getValue().equalsIgnoreCase("true")) {
-                        LOG.info("Session already marked as inactive");
+                        LOG.finest("Session already marked as inactive");
                         break;
                     }
-                    LOG.info("Marking as inactive");
+                    LOG.finest("Marking as inactive");
                     sessionData.setValue("true");
                     updatedSession.getSessionData().set(i, sessionData);
                     sessionUpdated = true;
@@ -146,7 +140,7 @@ public class DSessService {
                         );
             }
         } else {
-            LOG.info("no session found in cache");
+            LOG.finest("no session found in cache");
         }
 
         return Response
@@ -181,7 +175,7 @@ public class DSessService {
     public Response changeSession(ChangeSessionRequest changeSessionRequest) {
         LOG.finest(changeSessionRequest.toString());
         if (changeSessionRequest.getData() == null) {
-            LOG.warning("Updating a session with new data, ignoring request...");
+            LOG.warning("Updating a session with no new data, ignoring request...");
             return Response
                     .status(200)
                     .entity(constructChangeSessionResponse(changeSessionRequest.getVersion(), false))
@@ -190,7 +184,6 @@ public class DSessService {
         String sessionId = changeSessionRequest.getSessionId();
         MetadataValue<Session> cachedSessionWithMetadata = getSessionFromCacheWithMetadata(sessionId);
 
-        ChangeSessionReturn changeSessionReturn;
         ChangeSessionResponse changeSessionResponse;
         if (cachedSessionWithMetadata != null) {
             LOG.finest("Found a session in cache for key: " + sessionId);
@@ -203,22 +196,26 @@ public class DSessService {
                 // And now we'll update the data
                 for (SessionDataRequest sessionDataRequest : changeSessionRequest.getData()) {
                     int indexToModify = findIndexOfSessionAttribute(updatedSession.getSessionData(), sessionDataRequest.getDataClass());
-                    if (indexToModify == -1) continue;
-                    updatedSession.getSessionData().set(indexToModify, sessionDataRequest);
+                    if (indexToModify == -1) {
+                        // Add the new Session Data to the list
+                        LOG.finest("Adding new data: " + sessionDataRequest.toString());
+                        updatedSession.getSessionData().add(sessionDataRequest);
+                    } else {
+                        // Update existing session data
+                        LOG.finest("Modifying existing session data: " + sessionDataRequest.toString());
+                        updatedSession.getSessionData().set(indexToModify, sessionDataRequest);
+                    }
                 }
                 // And finally update the remote cache
                 sessionsRemoteCache.replace(sessionId, updatedSession, cachedSessionWithMetadata.getLifespan(), TimeUnit.SECONDS);
                 // Prepare the ChangeSessionResponse
                 changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), true);
-//                changeSessionReturn = new ChangeSessionReturn(changeSessionRequest.getVersion() + 1);
             } else {
-//                changeSessionReturn = new ChangeSessionReturn(changeSessionRequest.getVersion());
                 changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), false);
                 LOG.warning("Attempted to change session with '" + sessionId + "', but requested replica set is different, ignoring.");
             }
         } else {
             LOG.finest("No associated session was found for key: " + sessionId);
-//            changeSessionReturn = new ChangeSessionReturn(changeSessionRequest.getVersion());
             changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), false);
         }
 
@@ -260,18 +257,20 @@ public class DSessService {
         String replicaName = joinReplicaSetRequest.getReplica();
         Replica cachedReplica = replicasRemoteCache.get(replicaName);
         if (cachedReplica == null) {
-            LOG.info("Replica is not in cache yet, caching...");
+            LOG.finest("Replica is not in cache yet, caching...");
             Replica replica = new Replica(replicaName, joinReplicaSetRequest.getInstance(), joinReplicaSetRequest.getCapabilities(), joinReplicaSetRequest.getReplicaSet());
             return replicasRemoteCache.put(replicaName, replica);
         } else {
-            LOG.info("Replica was already cached, printing details ...");
-            LOG.info("replica = " + cachedReplica.toString());
+            LOG.finest("Replica was already cached, printing details ...");
+            LOG.finest("replica = " + cachedReplica.toString());
             return cachedReplica;
         }
     }
 
     private Replica shutdownReplica(String replicaName) {
-        return replicasRemoteCache.remove(replicaName);
+        return replicasRemoteCache
+                .withFlags(Flag.FORCE_RETURN_VALUE)
+                .remove(replicaName);
     }
 
     private Session cacheSession(CreateSessionRequest createSessionRequest) {
@@ -318,15 +317,6 @@ public class DSessService {
 
     private MetadataValue<Session> getSessionFromCacheWithMetadata(String sessionId) {
         return sessionsRemoteCache.getWithMetadata(sessionId);
-    }
-
-    private List<Replica> searchReplicasByReplicaSet(String replicaSet) {
-        QueryFactory queryFactory = Search.getQueryFactory(replicasRemoteCache);
-        Query query = queryFactory
-                .from(Replica.class)
-                .having("replicaSet").eq(replicaSet)
-                .build();
-        return query.list();
     }
 
 }

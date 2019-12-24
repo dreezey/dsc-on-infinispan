@@ -16,9 +16,10 @@ import java.net.URI;
 @PreMatching
 public class SOAPActionOverride implements ContainerRequestFilter {
     private static final Logger LOG = Logger.getLogger(SOAPActionOverride.class.getName());
+
     @Override
-    public void filter(ContainerRequestContext requestContext) throws IOException {
-        LOG.info("> filter()");
+    public void filter(ContainerRequestContext requestContext) {
+        LOG.finest("> filter()");
         // Get the current Request URI
         URI requestUri = requestContext.getUriInfo().getRequestUri();
         if (requestUri.getPath().endsWith("health")) return;
@@ -42,6 +43,6 @@ public class SOAPActionOverride implements ContainerRequestFilter {
         LOG.finest("Routed Request URI = " + uriOverride);
         // Set the new route
         requestContext.setRequestUri(uriOverride);
-        LOG.info("< filter()");
+        LOG.finest("< filter()");
     }
 }

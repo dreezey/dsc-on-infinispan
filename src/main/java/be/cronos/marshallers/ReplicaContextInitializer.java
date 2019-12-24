@@ -1,7 +1,6 @@
 package be.cronos.marshallers;
 
 import be.cronos.model.ispn.Replica;
-import be.cronos.model.ispn.ReplicaSet;
 import be.cronos.model.ispn.Session;
 import be.cronos.model.ispn.SessionData;
 import org.infinispan.protostream.SerializationContextInitializer;

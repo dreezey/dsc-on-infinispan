@@ -28,4 +28,11 @@ public class PingRequest {
     public void setSomething(int something) {
         this.something = something;
     }
+
+    @Override
+    public String toString() {
+        return "PingRequest{" +
+                "something=" + something +
+                '}';
+    }
 }

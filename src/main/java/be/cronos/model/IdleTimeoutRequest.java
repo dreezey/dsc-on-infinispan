@@ -51,4 +51,13 @@ public class IdleTimeoutRequest {
     public void setSessionId(String sessionId) {
         this.sessionId = sessionId;
     }
+
+    @Override
+    public String toString() {
+        return "IdleTimeoutRequest{" +
+                "replica='" + replica + '\'' +
+                ", replicaSet='" + replicaSet + '\'' +
+                ", sessionId='" + sessionId + '\'' +
+                '}';
+    }
 }

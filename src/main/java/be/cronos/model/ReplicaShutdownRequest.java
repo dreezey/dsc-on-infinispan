@@ -27,4 +27,11 @@ public class ReplicaShutdownRequest {
     public void setReplica(String replica) {
         this.replica = replica;
     }
+
+    @Override
+    public String toString() {
+        return "ReplicaShutdownRequest{" +
+                "replica='" + replica + '\'' +
+                '}';
+    }
 }

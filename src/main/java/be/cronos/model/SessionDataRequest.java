@@ -3,24 +3,11 @@ package be.cronos.model;
 import be.cronos.DsessConstants;
 import be.cronos.model.ispn.SessionData;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-//@XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
 @XmlRootElement(name = "data", namespace = DsessConstants.SMS_NS)
 public class SessionDataRequest extends SessionData {
-
-//    @XmlElement(namespace = DsessConstants.SMS_NS, nillable = true)
-//    private String value;
-//    @XmlElement(namespace = DsessConstants.SMS_NS)
-//    private String dataClass;
-//    @XmlElement(namespace = DsessConstants.SMS_NS)
-//    private String instance;
-//    @XmlElement(namespace = DsessConstants.SMS_NS)
-//    private int changePolicy;
-
 
     public SessionDataRequest() {
         super();
@@ -29,16 +16,6 @@ public class SessionDataRequest extends SessionData {
     public SessionDataRequest(String dataClass, String value, String instance, int changePolicy) {
         super(dataClass, value, instance, changePolicy);
     }
-
-    //    public CreateSessionDataRequest() {
-//    }
-//
-//    public CreateSessionDataRequest(String value, String dataClass, String instance, int changePolicy) {
-//        this.value = value;
-//        this.dataClass = dataClass;
-//        this.instance = instance;
-//        this.changePolicy = changePolicy;
-//    }
 
     @Override
     @XmlElement(namespace = DsessConstants.SMS_NS, nillable = true)

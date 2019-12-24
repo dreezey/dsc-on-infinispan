@@ -28,6 +28,7 @@ import java.lang.reflect.Type;
 @Produces(DsessConstants.CUSTOM_XML_MIMETYPE)
 public class DSCProtocolWriter implements MessageBodyWriter {
     private static final Logger LOG = Logger.getLogger(DSCProtocolWriter.class.getName());
+
     @Override
     public boolean isWriteable(Class type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         LOG.finest("isWriteable");
@@ -36,7 +37,7 @@ public class DSCProtocolWriter implements MessageBodyWriter {
 
     @Override
     public void writeTo(Object o, Class type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap httpHeaders, OutputStream outputStream) throws IOException, WebApplicationException {
-        LOG.info("> writeTo()");
+        LOG.finest("> writeTo()");
         LOG.finest("Output object class: " + o.getClass().getName());
         try {
             // Construct a document
@@ -63,9 +64,9 @@ public class DSCProtocolWriter implements MessageBodyWriter {
 
             // And write to the outputstream
             soapMessage.writeTo(outputStream);
-            LOG.info("< writeTo()");
+            LOG.finest("< writeTo()");
         } catch (ParserConfigurationException | JAXBException | SOAPException e) {
-            e.printStackTrace();
+            LOG.severe("Unable to marshal to a SOAP message: " + e.getMessage());
             throw new RuntimeException(e);
         }
     }

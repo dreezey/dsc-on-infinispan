@@ -73,4 +73,15 @@ public class GetSessionRequest {
     public void setSsoSource(String ssoSource) {
         this.ssoSource = ssoSource;
     }
+
+    @Override
+    public String toString() {
+        return "GetSessionRequest{" +
+                "replica='" + replica + '\'' +
+                ", replicaSet='" + replicaSet + '\'' +
+                ", sessionId='" + sessionId + '\'' +
+                ", ssoType='" + ssoType + '\'' +
+                ", ssoSource='" + ssoSource + '\'' +
+                '}';
+    }
 }

@@ -17,24 +17,14 @@ public class SessionData {
 
     @ProtoFactory
     public SessionData(String dataClass, String value, String instance, int changePolicy) {
-//        this.sessionId = Objects.requireNonNull(sessionId);
         this.dataClass = Objects.requireNonNull(dataClass);
         this.value = value;
         this.instance = Objects.requireNonNull(instance);
         this.changePolicy = changePolicy;
     }
 
-//    @ProtoField(number = 1)
-//    public String getSessionId() {
-//        return sessionId;
-//    }
-//
-//    public void setSessionId(String sessionId) {
-//        this.sessionId = sessionId;
-//    }
-
     @ProtoField(number = 1)
-    @XmlTransient
+    @XmlTransient // Annotation is here to prevent it from being marshalled in a response.
     public String getDataClass() {
         return dataClass;
     }
@@ -44,7 +34,7 @@ public class SessionData {
     }
 
     @ProtoField(number = 2)
-    @XmlTransient
+    @XmlTransient // Annotation is here to prevent it from being marshalled in a response.
     public String getValue() {
         return value;
     }
@@ -54,7 +44,7 @@ public class SessionData {
     }
 
     @ProtoField(number = 3)
-    @XmlTransient
+    @XmlTransient // Annotation is here to prevent it from being marshalled in a response.
     public String getInstance() {
         return instance;
     }
@@ -64,7 +54,7 @@ public class SessionData {
     }
 
     @ProtoField(number = 4, defaultValue = "1")
-    @XmlTransient
+    @XmlTransient // Annotation is here to prevent it from being marshalled in a response.
     public int getChangePolicy() {
         return changePolicy;
     }

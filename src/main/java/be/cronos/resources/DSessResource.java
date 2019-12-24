@@ -40,7 +40,8 @@ public class DSessResource {
     @Consumes(MediaType.TEXT_XML)
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
     public CompletionStage<Response> ping(PingRequest pingRequest) {
-        LOG.info("ping");
+        LOG.entering(DSessResource.class.getName(), "ping");
+        LOG.finest(pingRequest.toString());
         return CompletableFuture.supplyAsync(() -> {
             return pingService.pong(pingRequest);
         });
@@ -52,8 +53,9 @@ public class DSessResource {
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
     public void getUpdates(@Suspended AsyncResponse ar, GetUpdatesRequest getUpdatesRequest) {
         LOG.entering(DSessResource.class.getName(), "getUpdates");
+        LOG.finest("getUpdates()");
+        LOG.finest(getUpdatesRequest.toString());
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-        LOG.finest("Response by = " + getUpdatesRequest.getResponseBy() );
         int responseBy = getUpdatesRequest.getResponseBy();
 
         // Schedule based on requested responseBy
@@ -70,6 +72,8 @@ public class DSessResource {
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
     public CompletionStage<Response> joinReplicaSet(JoinReplicaSetRequest joinReplicaSetRequest) {
         LOG.entering(DSessResource.class.getName(), "joinReplicaSet");
+        LOG.finest("joinReplicaSet()");
+        LOG.finest(joinReplicaSetRequest.toString());
 
         return CompletableFuture.supplyAsync(() -> {
             return DSessService.joinReplicaSet(joinReplicaSetRequest);
@@ -82,6 +86,8 @@ public class DSessResource {
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
     public CompletionStage<Response> replicaShutdown(ReplicaShutdownRequest replicaShutdownRequest) {
         LOG.entering(DSessResource.class.getName(), "replicaShutdown");
+        LOG.finest("replicaShutdown()");
+        LOG.finest(replicaShutdownRequest.toString());
 
         return CompletableFuture.supplyAsync(() -> {
             return DSessService.shutdownReplica(replicaShutdownRequest);
@@ -94,6 +100,8 @@ public class DSessResource {
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
     public CompletionStage<Response> getRealmName(GetRealmNameRequest getRealmNameRequest) {
         LOG.entering(DSessResource.class.getName(), "getRealmName");
+        LOG.finest("getRealmName()");
+        LOG.finest(getRealmNameRequest.toString());
 
         return CompletableFuture.supplyAsync(() -> {
             return DSessService.getRealmName(getRealmNameRequest);
@@ -106,6 +114,8 @@ public class DSessResource {
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
     public CompletionStage<Response> createSession(CreateSessionRequest createSessionRequest) {
         LOG.entering(DSessResource.class.getName(), "createSession");
+        LOG.finest("createSession()");
+        LOG.finest(createSessionRequest.toString());
 
         return CompletableFuture.supplyAsync(() -> {
             return DSessService.createSession(createSessionRequest);
@@ -118,6 +128,8 @@ public class DSessResource {
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
     public CompletionStage<Response> getSession(GetSessionRequest getSessionRequest) {
         LOG.entering(DSessResource.class.getName(), "getSession");
+        LOG.finest("getSession()");
+        LOG.finest(getSessionRequest.toString());
 
         return CompletableFuture.supplyAsync(() -> {
             return DSessService.getSession(getSessionRequest);
@@ -130,6 +142,8 @@ public class DSessResource {
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
     public CompletionStage<Response> idleTimeout(IdleTimeoutRequest idleTimeoutRequest) {
         LOG.entering(DSessResource.class.getName(), "idleTimeout");
+        LOG.finest("idleTimeout()");
+        LOG.finest(idleTimeoutRequest.toString());
 
         return CompletableFuture.supplyAsync(() -> {
             return DSessService.idleTimeout(idleTimeoutRequest);
@@ -142,9 +156,10 @@ public class DSessResource {
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
     public CompletionStage<Response> terminateSession(TerminateSessionRequest terminateSessionRequest) {
         LOG.entering(DSessResource.class.getName(), "terminateSession");
+        LOG.finest("terminateSession()");
+        LOG.finest(terminateSessionRequest.toString());
 
         return CompletableFuture.supplyAsync(() -> {
-            // TODO implement session termination
             return DSessService.terminateSession(terminateSessionRequest);
         });
     }
@@ -155,6 +170,8 @@ public class DSessResource {
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
     public CompletionStage<Response> changeSession(ChangeSessionRequest changeSessionRequest) {
         LOG.entering(DSessResource.class.getName(), "changeSession");
+        LOG.finest("changeSession()");
+        LOG.finest(changeSessionRequest.toString());
 
         return CompletableFuture.supplyAsync(() -> {
             return DSessService.changeSession(changeSessionRequest);

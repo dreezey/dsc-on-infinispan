@@ -37,16 +37,18 @@ public class DSCProtocolReader implements MessageBodyReader {
     public Object readFrom(Class type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
         try {
             LOG.finest("Manual document building");
+
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             dbf.setNamespaceAware(true);
             DocumentBuilder db = dbf.newDocumentBuilder();
             Document doc = db.parse(entityStream);
-//            JAXBContext context = JAXBContext.newInstance(type);
+
             Node soapEnvelope = doc.getFirstChild();
             LOG.finest(soapEnvelope.getLocalName());
             LOG.finest(soapEnvelope.toString());
             NodeList children = soapEnvelope.getChildNodes();
             Node soapBody = null;
+            // Now attempt to find the body
             for (int i=0; i < children.getLength(); i++) {
                 Node child = children.item(i);
                 LOG.finest("child: " + child.getLocalName());
@@ -60,42 +62,24 @@ public class DSCProtocolReader implements MessageBodyReader {
 
             children = soapBody.getChildNodes();
             JAXBContext context = JAXBContext.newInstance(type);
-            Object unmarshall = null;
+            Object unmarshal = null;
+            // Automatically unmarshal to desired class
             for (int i=0; i < children.getLength(); i++) {
                 Node child = children.item(i);
                 LOG.finest("child: " + child.getLocalName());
                 if (child.getLocalName() != null) {
-                    unmarshall = context.createUnmarshaller().unmarshal(child);
+                    unmarshal = context.createUnmarshaller().unmarshal(child);
                     break;
                 }
             }
 
-            if (unmarshall == null) throw new JAXBException("Failed to unmarshall");
+            if (unmarshal == null) throw new JAXBException("Failed to unmarshal");
 
-            LOG.finest("Unmarshalled to class = " + unmarshall.getClass());
-//            if (unmarshall instanceof GetUpdatesRequest) {
-//                GetUpdatesRequest getUpdatesRequest = (GetUpdatesRequest) unmarshall;
-//                LOG.info("replica =" + getUpdatesRequest.getReplica());
-//            } else if (unmarshall instanceof PingRequest) {
-//                PingRequest pingRequest = (PingRequest) unmarshall;
-//                LOG.info("Something = " + pingRequest.getSomething());
-//            }
+            LOG.finest("Unmarshal to class = " + unmarshal.getClass());
 
-            return unmarshall;
-
-
-//
-
-//            Node soapBody = soapEnvelope.getFirstChild();
-//            LOG.info(soapBody.getNodeName());
-
-//            throw new JAXBException("denied");
-//            Object unmarshall = context.createUnmarshaller().unmarshal(entityStream);
-//            LOG.info("test = " + unmarshall.getClass());
-//            LOG.info("test = " + unmarshall.toString());
-//            return null;
+            return unmarshal;
         } catch (ParserConfigurationException | SAXException | JAXBException ex) {
-            LOG.info(ex.getMessage());
+            LOG.severe("When unmarshaling, an exception occurred, unable to continue: " + ex.getMessage());
             throw new RuntimeException(ex);
         }
     }

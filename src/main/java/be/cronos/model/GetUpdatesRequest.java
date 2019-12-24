@@ -58,4 +58,14 @@ public class GetUpdatesRequest {
     public void setResponseBy(int responseBy) {
         this.responseBy = responseBy;
     }
+
+    @Override
+    public String toString() {
+        return "GetUpdatesRequest{" +
+                "replica='" + replica + '\'' +
+                ", instance='" + instance + '\'' +
+                ", replicaSet='" + replicaSet + '\'' +
+                ", responseBy=" + responseBy +
+                '}';
+    }
 }

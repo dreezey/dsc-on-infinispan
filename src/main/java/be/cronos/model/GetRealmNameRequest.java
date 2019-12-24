@@ -39,4 +39,12 @@ public class GetRealmNameRequest {
     public void setReplicaSet(String replicaSet) {
         this.replicaSet = replicaSet;
     }
+
+    @Override
+    public String toString() {
+        return "GetRealmNameRequest{" +
+                "replica='" + replica + '\'' +
+                ", replicaSet='" + replicaSet + '\'' +
+                '}';
+    }
 }

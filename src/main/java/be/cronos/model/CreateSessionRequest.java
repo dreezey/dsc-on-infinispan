@@ -73,4 +73,15 @@ public class CreateSessionRequest {
     public void setData(List<SessionDataRequest> data) {
         this.data = data;
     }
+
+    @Override
+    public String toString() {
+        return "CreateSessionRequest{" +
+                "replica='" + replica + '\'' +
+                ", replicaSet='" + replicaSet + '\'' +
+                ", sessionId='" + sessionId + '\'' +
+                ", sessionLimit=" + sessionLimit +
+                ", data=" + data +
+                '}';
+    }
 }
