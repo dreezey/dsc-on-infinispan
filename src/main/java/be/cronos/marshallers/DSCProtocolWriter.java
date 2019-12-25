@@ -41,6 +41,15 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
+/**
+ * TODO
+ *  Native image building will not work yet since the following dependencies do not work properly yet:
+ *      import javax.xml.soap.MessageFactory;
+ *      import javax.xml.soap.SOAPException;
+ *      import javax.xml.soap.SOAPMessage;
+ *  There's an open issue on GitHub: https://github.com/quarkusio/quarkus/issues/4005 which aims to resolve SOAP issue in Quarkus.
+ *  For now I won't focus on the native images since it's an issue I can't seem to resolve.
+ */
 @Provider
 @Produces(DsessConstants.CUSTOM_XML_MIMETYPE)
 public class DSCProtocolWriter implements MessageBodyWriter {

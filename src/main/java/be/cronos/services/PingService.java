@@ -28,11 +28,8 @@ import javax.ws.rs.core.Response;
 public class PingService {
     private static final Logger LOG = Logger.getLogger(PingService.class.getName());
 
-    public Response pong(PingRequest pingRequest) {
-        return Response
-                .status(200)
-                .entity(new PingResponse())
-                .build();
+    public PingResponse pong(PingRequest pingRequest) {
+        return new PingResponse();
     }
 
 }

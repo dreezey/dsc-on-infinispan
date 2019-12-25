@@ -45,16 +45,13 @@ public class DSessService {
     @Remote("sessions")
     RemoteCache<String, Session> sessionsRemoteCache;
 
-    public Response joinReplicaSet(JoinReplicaSetRequest joinReplicaSetRequest) {
+    public JoinReplicaSetResponse joinReplicaSet(JoinReplicaSetRequest joinReplicaSetRequest) {
         Replica replica = attemptCacheReplica(joinReplicaSetRequest);
 
-        return Response
-                .status(200)
-                .entity(new JoinReplicaSetResponse())
-                .build();
+        return new JoinReplicaSetResponse();
     }
 
-    public Response shutdownReplica(ReplicaShutdownRequest replicaShutdownRequest) {
+    public ReplicaShutdownResponse shutdownReplica(ReplicaShutdownRequest replicaShutdownRequest) {
         Replica removedReplica = shutdownReplica(replicaShutdownRequest.getReplica());
 
         if (removedReplica == null) {
@@ -62,28 +59,19 @@ public class DSessService {
         } else {
             LOG.finest("replica removed from cache.");
         }
-        return Response
-                .status(200)
-                .entity(new ReplicaShutdownResponse())
-                .build();
+        return new ReplicaShutdownResponse();
     }
 
-    public Response getRealmName(GetRealmNameRequest getRealmNameRequest) {
-        return Response
-                .status(200)
-                .entity(new GetRealmNameResponse())
-                .build();
+    public GetRealmNameResponse getRealmName(GetRealmNameRequest getRealmNameRequest) {
+        return new GetRealmNameResponse();
     }
 
-    public Response createSession(CreateSessionRequest createSessionRequest) {
+    public CreateSessionResponse createSession(CreateSessionRequest createSessionRequest) {
         Session newSession = cacheSession(createSessionRequest);
-        return Response
-                .status(200)
-                .entity(new CreateSessionResponse())
-                .build();
+        return new CreateSessionResponse();
     }
 
-    public Response getSession(GetSessionRequest getSessionRequest) {
+    public GetSessionResponse getSession(GetSessionRequest getSessionRequest) {
         String sessionId = getSessionRequest.getSessionId();
         Session cachedSession = getSessionFromCache(sessionId);
         GetSessionResponse getSessionResponse;
@@ -114,13 +102,10 @@ public class DSessService {
                 getSessionResponse = constructEmptyGetSessionResponse();
             }
         }
-        return Response
-                .status(200)
-                .entity(getSessionResponse)
-                .build();
+        return getSessionResponse;
     }
 
-    public Response idleTimeout(IdleTimeoutRequest idleTimeoutRequest) {
+    public IdleTimeoutResponse idleTimeout(IdleTimeoutRequest idleTimeoutRequest) {
         String sessionId = idleTimeoutRequest.getSessionId();
         MetadataValue<Session> cachedSessionWithMetadata = getSessionFromCacheWithMetadata(sessionId);
 
@@ -160,13 +145,10 @@ public class DSessService {
             LOG.finest("no session found in cache");
         }
 
-        return Response
-                .status(200)
-                .entity(new IdleTimeoutResponse())
-                .build();
+        return new IdleTimeoutResponse();
     }
 
-    public Response terminateSession(TerminateSessionRequest terminateSessionRequest) {
+    public TerminateSessionResponse terminateSession(TerminateSessionRequest terminateSessionRequest) {
         // TODO when terminating a session, it should be added to a graveyard of some sort to let "getUpdates" know.
         LOG.finest("Incoming TerminateSessionRequest: " + terminateSessionRequest.toString());
         String sessionId = terminateSessionRequest.getSessionId();
@@ -182,21 +164,14 @@ public class DSessService {
             }
         }
         TerminateSessionReturn terminateSessionReturn = new TerminateSessionReturn(terminateSessionRequest.getVersion());
-        TerminateSessionResponse terminateSessionResponse = new TerminateSessionResponse(terminateSessionReturn);
-        return Response
-                .status(200)
-                .entity(terminateSessionResponse)
-                .build();
+        return new TerminateSessionResponse(terminateSessionReturn);
     }
 
-    public Response changeSession(ChangeSessionRequest changeSessionRequest) {
+    public ChangeSessionResponse changeSession(ChangeSessionRequest changeSessionRequest) {
         LOG.finest(changeSessionRequest.toString());
         if (changeSessionRequest.getData() == null) {
             LOG.warning("Updating a session with no new data, ignoring request...");
-            return Response
-                    .status(200)
-                    .entity(constructChangeSessionResponse(changeSessionRequest.getVersion(), false))
-                    .build();
+            return constructChangeSessionResponse(changeSessionRequest.getVersion(), false);
         }
         String sessionId = changeSessionRequest.getSessionId();
         MetadataValue<Session> cachedSessionWithMetadata = getSessionFromCacheWithMetadata(sessionId);
@@ -236,10 +211,7 @@ public class DSessService {
             changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), false);
         }
 
-        return Response
-                .status(200)
-                .entity(changeSessionResponse)
-                .build();
+        return changeSessionResponse;
     }
 
     private int findIndexOfSessionAttribute(ArrayList<SessionData> sourceSessionData, String dataClass) {

@@ -31,7 +31,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.concurrent.*;
 
 @Path("/DSess")
@@ -61,7 +60,7 @@ public class DSessResource {
     @Consumes(MediaType.TEXT_XML)
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
     @PermitAll // Everyone should be able to ping...
-    public CompletionStage<Response> ping(PingRequest pingRequest) {
+    public CompletionStage<PingResponse> ping(PingRequest pingRequest) {
         LOG.entering(DSessResource.class.getName(), "ping");
         LOG.finest(pingRequest.toString());
         return CompletableFuture.supplyAsync(() -> {
@@ -92,7 +91,7 @@ public class DSessResource {
     @POST
     @Consumes(MediaType.TEXT_XML)
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
-    public CompletionStage<Response> joinReplicaSet(JoinReplicaSetRequest joinReplicaSetRequest) {
+    public CompletionStage<JoinReplicaSetResponse> joinReplicaSet(JoinReplicaSetRequest joinReplicaSetRequest) {
         LOG.entering(DSessResource.class.getName(), "joinReplicaSet");
         LOG.finest("joinReplicaSet()");
         LOG.finest(joinReplicaSetRequest.toString());
@@ -106,7 +105,7 @@ public class DSessResource {
     @POST
     @Consumes(MediaType.TEXT_XML)
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
-    public CompletionStage<Response> replicaShutdown(ReplicaShutdownRequest replicaShutdownRequest) {
+    public CompletionStage<ReplicaShutdownResponse> replicaShutdown(ReplicaShutdownRequest replicaShutdownRequest) {
         LOG.entering(DSessResource.class.getName(), "replicaShutdown");
         LOG.finest("replicaShutdown()");
         LOG.finest(replicaShutdownRequest.toString());
@@ -120,7 +119,7 @@ public class DSessResource {
     @POST
     @Consumes(MediaType.TEXT_XML)
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
-    public CompletionStage<Response> getRealmName(GetRealmNameRequest getRealmNameRequest) {
+    public CompletionStage<GetRealmNameResponse> getRealmName(GetRealmNameRequest getRealmNameRequest) {
         LOG.entering(DSessResource.class.getName(), "getRealmName");
         LOG.finest("getRealmName()");
         LOG.finest(getRealmNameRequest.toString());
@@ -134,7 +133,7 @@ public class DSessResource {
     @POST
     @Consumes(MediaType.TEXT_XML)
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
-    public CompletionStage<Response> createSession(CreateSessionRequest createSessionRequest) {
+    public CompletionStage<CreateSessionResponse> createSession(CreateSessionRequest createSessionRequest) {
         LOG.entering(DSessResource.class.getName(), "createSession");
         LOG.finest("createSession()");
         LOG.finest(createSessionRequest.toString());
@@ -148,7 +147,7 @@ public class DSessResource {
     @POST
     @Consumes(MediaType.TEXT_XML)
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
-    public CompletionStage<Response> getSession(GetSessionRequest getSessionRequest) {
+    public CompletionStage<GetSessionResponse> getSession(GetSessionRequest getSessionRequest) {
         LOG.entering(DSessResource.class.getName(), "getSession");
         LOG.finest("getSession()");
         LOG.finest(getSessionRequest.toString());
@@ -162,7 +161,7 @@ public class DSessResource {
     @POST
     @Consumes(MediaType.TEXT_XML)
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
-    public CompletionStage<Response> idleTimeout(IdleTimeoutRequest idleTimeoutRequest) {
+    public CompletionStage<IdleTimeoutResponse> idleTimeout(IdleTimeoutRequest idleTimeoutRequest) {
         LOG.entering(DSessResource.class.getName(), "idleTimeout");
         LOG.finest("idleTimeout()");
         LOG.finest(idleTimeoutRequest.toString());
@@ -176,7 +175,7 @@ public class DSessResource {
     @POST
     @Consumes(MediaType.TEXT_XML)
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
-    public CompletionStage<Response> terminateSession(TerminateSessionRequest terminateSessionRequest) {
+    public CompletionStage<TerminateSessionResponse> terminateSession(TerminateSessionRequest terminateSessionRequest) {
         LOG.entering(DSessResource.class.getName(), "terminateSession");
         LOG.finest("terminateSession()");
         LOG.finest(terminateSessionRequest.toString());
@@ -190,7 +189,7 @@ public class DSessResource {
     @POST
     @Consumes(MediaType.TEXT_XML)
     @Produces({DsessConstants.CUSTOM_XML_MIMETYPE, MediaType.TEXT_XML})
-    public CompletionStage<Response> changeSession(ChangeSessionRequest changeSessionRequest) {
+    public CompletionStage<ChangeSessionResponse> changeSession(ChangeSessionRequest changeSessionRequest) {
         LOG.entering(DSessResource.class.getName(), "changeSession");
         LOG.finest("changeSession()");
         LOG.finest(changeSessionRequest.toString());
