@@ -28,7 +28,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "joinReplicaSetReturn", namespace = DsessConstants.SMS_NS)
 public class JoinReplicaSetReturn {
     @XmlElement(namespace = DsessConstants.SMS_NS)
-    private final int result = DsessConstants.STATIC_RESULT_INT;
+    private int result/* = DsessConstants.RESULT_OK*/;
     @XmlElement(namespace = DsessConstants.SMS_NS)
     private final String currentKey = DsessConstants.NEW_KEY;
     @XmlElement(namespace = DsessConstants.SMS_NS)
@@ -40,14 +40,15 @@ public class JoinReplicaSetReturn {
     @XmlElement(namespace = DsessConstants.SMS_NS)
     private int currentKeyAge;
 
-    public JoinReplicaSetReturn(int currentKeyId, int oldKeyId, int currentKeyAge) {
+    public JoinReplicaSetReturn(int result, int currentKeyId, int oldKeyId, int currentKeyAge) {
+        this.result = result;
         this.currentKeyId = currentKeyId;
         this.oldKeyId = oldKeyId;
         this.currentKeyAge = currentKeyAge;
     }
 
     public JoinReplicaSetReturn() {
-        this(0, 0, -1);
+
     }
 
     public int getResult() {

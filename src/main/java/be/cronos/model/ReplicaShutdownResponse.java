@@ -28,20 +28,20 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "replicaShutdownResponse", namespace = DsessConstants.SMS_NS)
 public class ReplicaShutdownResponse {
     @XmlElement(namespace = DsessConstants.SMS_NS)
-    private final int replicaShutdownReturn = DsessConstants.STATIC_RESULT_INT;
+    private int replicaShutdownReturn;
 
     public ReplicaShutdownResponse() {
     }
 
-//    public ReplicaShutdownResponse(int replicaShutdownReturn) {
-//        this.replicaShutdownReturn = replicaShutdownReturn;
-//    }
+    public ReplicaShutdownResponse(int replicaShutdownReturn) {
+        this.replicaShutdownReturn = replicaShutdownReturn;
+    }
 
     public int getReplicaShutdownReturn() {
         return replicaShutdownReturn;
     }
 
-//    public void setReplicaShutdownReturn(int replicaShutdownReturn) {
-//        this.replicaShutdownReturn = replicaShutdownReturn;
-//    }
+    public void setReplicaShutdownReturn(int replicaShutdownReturn) {
+        this.replicaShutdownReturn = replicaShutdownReturn;
+    }
 }

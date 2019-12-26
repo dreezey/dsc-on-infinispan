@@ -17,8 +17,11 @@
 
 package be.cronos.services;
 
+import be.cronos.DsessConstants;
+import be.cronos.model.DSCResultCode;
 import be.cronos.model.GetUpdatesRequest;
 import be.cronos.model.GetUpdatesResponse;
+import be.cronos.model.GetUpdatesReturn;
 import org.jboss.logmanager.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -32,6 +35,12 @@ public class GetUpdatesService {
     public GetUpdatesResponse getUpdates(GetUpdatesRequest getUpdatesRequest) {
         // At some point, this will look in a graveyard of sort to detect terminated sessions
         LOG.entering(CN, "getUpdates");
-        return new GetUpdatesResponse();
+        return new GetUpdatesResponse(
+                new GetUpdatesReturn(
+                        DSCResultCode.OK.getResultCode(),
+                        DsessConstants.NEW_KEY,
+                        0
+                )
+        );
     }
 }

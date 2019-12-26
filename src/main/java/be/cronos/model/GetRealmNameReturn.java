@@ -29,18 +29,31 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class GetRealmNameReturn {
 
     @XmlElement(namespace = DsessConstants.SMS_NS)
-    private final int result = DsessConstants.STATIC_RESULT_INT;
+    private int result;
     @XmlElement(namespace = DsessConstants.SMS_NS)
-    private final String realm = DsessConstants.REALM_NAME;
+    private String realm;
 
     public GetRealmNameReturn() {
+    }
+
+    public GetRealmNameReturn(int result, String realm) {
+        this.result = result;
+        this.realm = realm;
     }
 
     public int getResult() {
         return result;
     }
 
+    public void setResult(int result) {
+        this.result = result;
+    }
+
     public String getRealm() {
         return realm;
+    }
+
+    public void setRealm(String realm) {
+        this.realm = realm;
     }
 }

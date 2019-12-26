@@ -31,13 +31,7 @@ public class TerminateSessionResponse {
     @XmlElement(namespace = DsessConstants.SMS_NS)
     private TerminateSessionReturn terminateSessionReturn;
 
-    public TerminateSessionResponse() {
-        this.terminateSessionReturn = new TerminateSessionReturn();
-    }
-
-    public TerminateSessionResponse(int version) {
-        this.terminateSessionReturn = new TerminateSessionReturn(version);
-    }
+    public TerminateSessionResponse() { }
 
     public TerminateSessionResponse(TerminateSessionReturn terminateSessionReturn) {
         this.terminateSessionReturn = terminateSessionReturn;

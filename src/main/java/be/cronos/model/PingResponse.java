@@ -32,7 +32,7 @@ public class PingResponse {
     }
 
     public PingResponse() {
-        this(DsessConstants.STATIC_RESULT_INT);
+
     }
 
     public int getPingReturn() {

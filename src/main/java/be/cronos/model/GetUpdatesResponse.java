@@ -33,7 +33,7 @@ public class GetUpdatesResponse {
     }
 
     public GetUpdatesResponse() {
-        this(new GetUpdatesReturn(DsessConstants.STATIC_RESULT_INT, DsessConstants.NEW_KEY, 0));
+
     }
 
     public GetUpdatesReturn getGetUpdatesReturn() {

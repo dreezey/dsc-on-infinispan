@@ -33,11 +33,16 @@ public class CreateSessionResponse {
     private CreateSessionReturn createSessionReturn;
 
     public CreateSessionResponse() {
-        this.createSessionReturn = new CreateSessionReturn();
     }
 
     public CreateSessionResponse(CreateSessionReturn createSessionReturn) {
         this.createSessionReturn = createSessionReturn;
+    }
+
+    public static CreateSessionResponse constructCreateSessionResponse(int result) {
+        return new CreateSessionResponse(
+                new CreateSessionReturn(result, 0, 1)
+        );
     }
 
     public CreateSessionReturn getCreateSessionReturn() {

@@ -32,7 +32,6 @@ public class GetRealmNameResponse {
     private GetRealmNameReturn getRealmNameReturn;
 
     public GetRealmNameResponse() {
-        this.getRealmNameReturn = new GetRealmNameReturn();
     }
 
     public GetRealmNameResponse(GetRealmNameReturn getRealmNameReturn) {

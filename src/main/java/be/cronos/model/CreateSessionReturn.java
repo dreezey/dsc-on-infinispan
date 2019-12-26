@@ -23,22 +23,28 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "createSessionReturn", namespace = DsessConstants.SMS_NS)
 public class CreateSessionReturn {
 
     @XmlElement(namespace = DsessConstants.SMS_NS)
-    private final int result = DsessConstants.STATIC_RESULT_INT;
+    private final int result /*= DsessConstants.RESULT_OK*/;
     @XmlElement(namespace = DsessConstants.SMS_NS)
-    private final int version = 0;
+    private final int version /*= 0*/;
     @XmlElement(namespace = DsessConstants.SMS_NS)
-    private final int stackDepth = 1;
+    private final int stackDepth /*= 1*/;
     @XmlElement(namespace = DsessConstants.SMS_NS)
     private final boolean clearOnReadDataPresent = false;
 
     public CreateSessionReturn() {
+        this(DSCResultCode.OK.getResultCode(), 0, 1);
+    }
+
+    public CreateSessionReturn(int result, int version, int stackDepth) {
+        this.result = result;
+        this.version = version;
+        this.stackDepth = stackDepth;
     }
 
     public int getResult() {

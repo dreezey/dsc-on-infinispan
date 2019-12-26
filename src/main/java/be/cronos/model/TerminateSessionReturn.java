@@ -29,23 +29,30 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class TerminateSessionReturn {
 
     @XmlElement(namespace = DsessConstants.SMS_NS)
-    private final int result = DsessConstants.STATIC_RESULT_INT;
+    private int result;
     @XmlElement(namespace = DsessConstants.SMS_NS)
     private int version;
     @XmlElement(namespace = DsessConstants.SMS_NS)
-    private final int stackDepth = 0;
+    private int stackDepth;
     @XmlElement(namespace = DsessConstants.SMS_NS)
-    private final boolean clearOnReadDataPresent = false;
+    private boolean clearOnReadDataPresent = false;
 
     public TerminateSessionReturn() {
     }
 
-    public TerminateSessionReturn(int version) {
+    public TerminateSessionReturn(int result, int version, int stackDepth, boolean clearOnReadDataPresent) {
+        this.result = result;
         this.version = version;
+        this.stackDepth = stackDepth;
+        this.clearOnReadDataPresent = clearOnReadDataPresent;
     }
 
     public int getResult() {
         return result;
+    }
+
+    public void setResult(int result) {
+        this.result = result;
     }
 
     public int getVersion() {
@@ -60,7 +67,15 @@ public class TerminateSessionReturn {
         return stackDepth;
     }
 
+    public void setStackDepth(int stackDepth) {
+        this.stackDepth = stackDepth;
+    }
+
     public boolean isClearOnReadDataPresent() {
         return clearOnReadDataPresent;
+    }
+
+    public void setClearOnReadDataPresent(boolean clearOnReadDataPresent) {
+        this.clearOnReadDataPresent = clearOnReadDataPresent;
     }
 }

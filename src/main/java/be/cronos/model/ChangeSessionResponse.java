@@ -32,7 +32,6 @@ public class ChangeSessionResponse {
     private ChangeSessionReturn changeSessionReturn;
 
     public ChangeSessionResponse() {
-        this.changeSessionReturn = new ChangeSessionReturn();
     }
 
     public ChangeSessionResponse(ChangeSessionReturn changeSessionReturn) {

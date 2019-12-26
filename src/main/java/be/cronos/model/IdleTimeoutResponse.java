@@ -29,12 +29,20 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class IdleTimeoutResponse {
 
     @XmlElement(namespace = DsessConstants.SMS_NS)
-    private final int idleTimeoutReturn = DsessConstants.STATIC_RESULT_INT;
+    private int idleTimeoutReturn;
 
     public IdleTimeoutResponse() {
     }
 
+    public IdleTimeoutResponse(int idleTimeoutReturn) {
+        this.idleTimeoutReturn = idleTimeoutReturn;
+    }
+
     public int getIdleTimeoutReturn() {
         return idleTimeoutReturn;
+    }
+
+    public void setIdleTimeoutReturn(int idleTimeoutReturn) {
+        this.idleTimeoutReturn = idleTimeoutReturn;
     }
 }

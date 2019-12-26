@@ -24,24 +24,27 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
+
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "getSessionReturn", namespace = DsessConstants.SMS_NS)
 public class GetSessionReturn {
 
     @XmlElement(namespace = DsessConstants.SMS_NS)
-    private final int result = DsessConstants.STATIC_RESULT_INT;
+    private int result;
     @XmlElement(namespace = DsessConstants.SMS_NS)
     private int version;
     @XmlElement(namespace = DsessConstants.SMS_NS)
-    private final int stackDepth = 1;
+    private int stackDepth;
     @XmlElement(namespace = DsessConstants.SMS_NS, nillable = true, required = false)
     private ArrayList<GetSessionDataReturn> data;
 
     public GetSessionReturn() {
     }
 
-    public GetSessionReturn(int version, ArrayList<GetSessionDataReturn> data) {
+    public GetSessionReturn(int result, int version, int stackDepth, ArrayList<GetSessionDataReturn> data) {
+        this.result = result;
         this.version = version;
+        this.stackDepth = stackDepth;
         this.data = data;
     }
 
@@ -49,16 +52,24 @@ public class GetSessionReturn {
         return result;
     }
 
-    public void setVersion(int version) {
-        this.version = version;
+    public void setResult(int result) {
+        this.result = result;
     }
 
     public int getVersion() {
         return version;
     }
 
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
     public int getStackDepth() {
         return stackDepth;
+    }
+
+    public void setStackDepth(int stackDepth) {
+        this.stackDepth = stackDepth;
     }
 
     public ArrayList<GetSessionDataReturn> getData() {

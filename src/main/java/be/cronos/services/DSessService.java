@@ -28,8 +28,8 @@ import org.jboss.logmanager.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.ws.rs.core.Response;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -48,140 +48,159 @@ public class DSessService {
     public JoinReplicaSetResponse joinReplicaSet(JoinReplicaSetRequest joinReplicaSetRequest) {
         Replica replica = attemptCacheReplica(joinReplicaSetRequest);
 
-        return new JoinReplicaSetResponse();
+        return new JoinReplicaSetResponse(
+                new JoinReplicaSetReturn(
+                        DSCResultCode.OK.getResultCode(),
+                        0,
+                        0,
+                        -1
+                )
+        );
     }
 
     public ReplicaShutdownResponse shutdownReplica(ReplicaShutdownRequest replicaShutdownRequest) {
         Replica removedReplica = shutdownReplica(replicaShutdownRequest.getReplica());
 
         if (removedReplica == null) {
-            LOG.finest("replica was not in cache anyway");
+            LOG.info("replica was not in cache anyway");
         } else {
-            LOG.finest("replica removed from cache.");
+            LOG.info("replica removed from cache.");
         }
-        return new ReplicaShutdownResponse();
+        return new ReplicaShutdownResponse(
+                DSCResultCode.OK.getResultCode()
+        );
     }
 
     public GetRealmNameResponse getRealmName(GetRealmNameRequest getRealmNameRequest) {
-        return new GetRealmNameResponse();
+        return new GetRealmNameResponse(
+                new GetRealmNameReturn(
+                        DSCResultCode.OK.getResultCode(),
+                        DsessConstants.REALM_NAME
+                )
+        );
     }
 
     public CreateSessionResponse createSession(CreateSessionRequest createSessionRequest) {
-        Session newSession = cacheSession(createSessionRequest);
-        return new CreateSessionResponse();
+        return cacheSession(createSessionRequest);
     }
 
     public GetSessionResponse getSession(GetSessionRequest getSessionRequest) {
         String sessionId = getSessionRequest.getSessionId();
+        if (sessionId == null) {
+            LOG.warning("No session ID or data.");
+            return constructGetSessionResponse(
+                    DSCResultCode.NOT_CHANGED,
+                    0,
+                    1,
+                    null
+            );
+        }
+        LOG.finest("Session ID = " + sessionId);
+        // Now validate whether the replica set is valid
+        Replica cachedReplica = getReplicaFromCache(getSessionRequest.getReplica());
+        if (cachedReplica == null) {
+            LOG.warning("cached replica is null.");
+            return constructGetSessionResponse(
+                    DSCResultCode.REPLICA_SET_NOT_FOUND,
+                    0,
+                    1,
+                    null
+            );
+        }
+        if (!cachedReplica.getReplicaSet().equalsIgnoreCase(getSessionRequest.getReplicaSet())) {
+            LOG.warning("replica sets don't match.");
+            return constructGetSessionResponse(
+                    DSCResultCode.REPLICA_SET_NOT_FOUND,
+                    0,
+                    1,
+                    null
+            );
+        }
+
         Session cachedSession = getSessionFromCache(sessionId);
         GetSessionResponse getSessionResponse;
         if (cachedSession == null) {
-            LOG.finest("no cached session found with ID: " + sessionId);
-            getSessionResponse = constructEmptyGetSessionResponse();
+            LOG.fine("no cached session found with ID: " + sessionId);
+            return constructGetSessionResponse(
+                    DSCResultCode.NOT_CHANGED,
+                    0,
+                    1,
+                    null
+            );
         } else {
-            LOG.finest("Session found in cache: " + sessionId);
-            if (getSessionRequest.getReplicaSet().equalsIgnoreCase(cachedSession.getReplicaSet())) {
-                LOG.finest("Requested replicaset matches cached replicaset: " + cachedSession.getReplicaSet());
-                LOG.finest("Returning valid session response.");
-                ArrayList<GetSessionDataReturn> getSessionDataReturn = new ArrayList<>();
-                cachedSession.getSessionData().forEach(sessionData -> {
-                    getSessionDataReturn.add(new GetSessionDataReturn(
-                            sessionData.getDataClass(),
-                            sessionData.getValue(),
-                            sessionData.getInstance(),
-                            sessionData.getChangePolicy()
-                    ));
-                });
-                GetSessionReturn getSessionReturn = new GetSessionReturn(
-                        0,
-                        getSessionDataReturn
-                );
-                getSessionResponse = new GetSessionResponse(getSessionReturn);
-            } else {
-                LOG.warning("Requested session ID was found, but the replica set does not match, returning empty response.");
-                getSessionResponse = constructEmptyGetSessionResponse();
-            }
+            LOG.fine("Session found in cache: " + sessionId);
+            ArrayList<GetSessionDataReturn> getSessionDataReturn = new ArrayList<>();
+            cachedSession.getSessionData().forEach(sessionData -> {
+                getSessionDataReturn.add(new GetSessionDataReturn(
+                        sessionData.getDataClass(),
+                        sessionData.getValue(),
+                        sessionData.getInstance(),
+                        sessionData.getChangePolicy()
+                ));
+            });
+            return constructGetSessionResponse(
+                    DSCResultCode.OK,
+                    0,
+                    1,
+                    getSessionDataReturn
+            );
         }
-        return getSessionResponse;
     }
 
     public IdleTimeoutResponse idleTimeout(IdleTimeoutRequest idleTimeoutRequest) {
-        String sessionId = idleTimeoutRequest.getSessionId();
-        MetadataValue<Session> cachedSessionWithMetadata = getSessionFromCacheWithMetadata(sessionId);
-
-        if (cachedSessionWithMetadata != null) {
-            // Get the session data
-            Session cachedSession = cachedSessionWithMetadata.getValue();
-            // Make a copy of the cached session
-            Session updatedSession = Session.shallowCopy(cachedSession);
-            boolean sessionUpdated = false;
-            for (int i=0; i < cachedSession.getSessionData().size(); i++) {
-                SessionData sessionData = cachedSession.getSessionData().get(i);
-                if (sessionData.getDataClass().equalsIgnoreCase(DsessConstants.IS_INACTIVE_DATACLASS)) {
-                    if (sessionData.getValue().equalsIgnoreCase("true")) {
-                        LOG.finest("Session already marked as inactive");
-                        break;
-                    }
-                    LOG.finest("Marking as inactive");
-                    sessionData.setValue("true");
-                    updatedSession.getSessionData().set(i, sessionData);
-                    sessionUpdated = true;
-                    break;
-                }
-            }
-
-            if (sessionUpdated) {
-                //TODO still resets the timer to the original value, may need to review how to properly handle lifetime
-                sessionsRemoteCache
-//                    .withFlags(Flag.FORCE_RETURN_VALUE) // don't force return value to prevent unnecessary (un)marshalling
-                        .replace(
-                                sessionId,
-                                updatedSession,
-                                cachedSessionWithMetadata.getLifespan(),
-                                TimeUnit.SECONDS
-                        );
-            }
-        } else {
-            LOG.finest("no session found in cache");
-        }
-
-        return new IdleTimeoutResponse();
+        return new IdleTimeoutResponse(
+                terminateSession(
+                        idleTimeoutRequest.getSessionId(),
+                        idleTimeoutRequest.getReplica(),
+                        idleTimeoutRequest.getReplicaSet()
+                ).getResultCode()
+        );
     }
 
     public TerminateSessionResponse terminateSession(TerminateSessionRequest terminateSessionRequest) {
-        // TODO when terminating a session, it should be added to a graveyard of some sort to let "getUpdates" know.
-        LOG.finest("Incoming TerminateSessionRequest: " + terminateSessionRequest.toString());
-        String sessionId = terminateSessionRequest.getSessionId();
-        Session cachedSession = getSessionFromCache(sessionId);
-
-        if (cachedSession != null) {
-            LOG.finest("There's a session in cache, preparing to delete");
-            if (cachedSession.getReplicaSet().equalsIgnoreCase(terminateSessionRequest.getReplicaSet())) {
-                LOG.finest("Removing session: " + sessionId);
-                sessionsRemoteCache.remove(sessionId);
-            } else {
-                LOG.warning("Termination of session with id '" + sessionId + "' failed because the replica sets do not match.");
-            }
-        }
-        TerminateSessionReturn terminateSessionReturn = new TerminateSessionReturn(terminateSessionRequest.getVersion());
-        return new TerminateSessionResponse(terminateSessionReturn);
+        return new TerminateSessionResponse(
+                new TerminateSessionReturn(
+                        terminateSession(
+                                terminateSessionRequest.getSessionId(),
+                                terminateSessionRequest.getReplica(),
+                                terminateSessionRequest.getReplicaSet()
+                        ).getResultCode(),
+                        0,
+                        1,
+                        false
+                )
+        );
     }
 
     public ChangeSessionResponse changeSession(ChangeSessionRequest changeSessionRequest) {
-        LOG.finest(changeSessionRequest.toString());
-        if (changeSessionRequest.getData() == null) {
-            LOG.warning("Updating a session with no new data, ignoring request...");
-            return constructChangeSessionResponse(changeSessionRequest.getVersion(), false);
+        if (changeSessionRequest.getSessionId() == null || changeSessionRequest.getData() == null) {
+            LOG.warning("Updating a session with no new data or missing session id, ignoring request...");
+            return constructChangeSessionResponse(changeSessionRequest.getVersion(), false, DSCResultCode.NOT_CHANGED);
+        }
+        // Now validate whether the replica set is valid
+        Replica cachedReplica = getReplicaFromCache(changeSessionRequest.getReplica());
+        if (cachedReplica == null) {
+            LOG.warning("cached replica is null.");
+            return constructChangeSessionResponse(changeSessionRequest.getVersion(), false, DSCResultCode.REPLICA_SET_NOT_FOUND);
+        }
+        if (!cachedReplica.getReplicaSet().equalsIgnoreCase(changeSessionRequest.getReplicaSet())) {
+            LOG.warning("replica sets don't match.");
+            return constructChangeSessionResponse(changeSessionRequest.getVersion(), false, DSCResultCode.REPLICA_SET_NOT_FOUND);
         }
         String sessionId = changeSessionRequest.getSessionId();
         MetadataValue<Session> cachedSessionWithMetadata = getSessionFromCacheWithMetadata(sessionId);
 
         ChangeSessionResponse changeSessionResponse;
-        if (cachedSessionWithMetadata != null) {
+        if (cachedSessionWithMetadata == null) {
+            LOG.warning("No associated session was found for key: " + sessionId);
+            changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), false, DSCResultCode.NOT_CHANGED);
+        } else {
             LOG.finest("Found a session in cache for key: " + sessionId);
             Session cachedSession = cachedSessionWithMetadata.getValue();
-            if (cachedSession.getReplicaSet().equalsIgnoreCase(changeSessionRequest.getReplicaSet())) {
-                // replica set matches
+            if (cachedSession == null) {
+                LOG.severe("Session ID yielded data, but Session appears to be null, this should not occur.");
+                changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), false, DSCResultCode.NOT_CHANGED);
+            } else {
                 Session updatedSession = Session.shallowCopy(cachedSession);
                 // Update normal properties first
                 updatedSession.setSessionLimit(changeSessionRequest.getSessionLimit());
@@ -201,17 +220,41 @@ public class DSessService {
                 // And finally update the remote cache
                 sessionsRemoteCache.replace(sessionId, updatedSession, cachedSessionWithMetadata.getLifespan(), TimeUnit.SECONDS);
                 // Prepare the ChangeSessionResponse
-                changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), true);
-            } else {
-                changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), false);
-                LOG.warning("Attempted to change session with '" + sessionId + "', but requested replica set is different, ignoring.");
+                changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), true, DSCResultCode.OK);
             }
-        } else {
-            LOG.finest("No associated session was found for key: " + sessionId);
-            changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), false);
         }
 
         return changeSessionResponse;
+    }
+
+    private DSCResultCode terminateSession(String sessionId, String replica, String replicaSet) {
+        // TODO when terminating a session, it should be added to a graveyard of some sort to let "getUpdates" know.
+        if (sessionId == null) {
+            LOG.warning("Terminating a session with missing session id, ignoring request...");
+            return DSCResultCode.NOT_CHANGED;
+        }
+        // Now validate whether the replica set is valid
+        Replica cachedReplica = getReplicaFromCache(replica);
+        if (cachedReplica == null) {
+            LOG.warning("Cached replica is null.");
+            return DSCResultCode.REPLICA_SET_NOT_FOUND;
+        }
+        if (!cachedReplica.getReplicaSet().equalsIgnoreCase(replicaSet)) {
+            LOG.warning("replica sets don't match.");
+            return DSCResultCode.REPLICA_SET_NOT_FOUND;
+        }
+
+        Session cachedSession = getSessionFromCache(sessionId);
+
+        if (cachedSession == null) {
+            LOG.fine("Session with ID '" + sessionId + "' has no associated session.");
+            return DSCResultCode.NOT_CHANGED;
+        }
+
+        LOG.finest("Removing session: " + sessionId);
+        sessionsRemoteCache.remove(sessionId);
+
+        return DSCResultCode.OK;
     }
 
     private int findIndexOfSessionAttribute(ArrayList<SessionData> sourceSessionData, String dataClass) {
@@ -224,20 +267,33 @@ public class DSessService {
         return -1;
     }
 
-    private ChangeSessionResponse constructChangeSessionResponse(int version, boolean updated) {
+    private ChangeSessionResponse constructChangeSessionResponse(int version, boolean updated, DSCResultCode resultCode) {
         ChangeSessionReturn changeSessionReturn;
+        boolean clearOnReadDataPresent = false;
         if (updated) {
-            changeSessionReturn = new ChangeSessionReturn(version);
+            changeSessionReturn = new ChangeSessionReturn(
+                    resultCode.getResultCode(),
+                    version + 1,
+                    1,
+                    clearOnReadDataPresent
+            );
         } else {
-            changeSessionReturn = new ChangeSessionReturn(version + 1);
+            changeSessionReturn = new ChangeSessionReturn(
+                    resultCode.getResultCode(),
+                    version,
+                    1,
+                    clearOnReadDataPresent
+            );
         }
         return new ChangeSessionResponse(changeSessionReturn);
     }
 
-    private GetSessionResponse constructEmptyGetSessionResponse() {
+    private GetSessionResponse constructGetSessionResponse(DSCResultCode resultCode, int version, int stackDepth, ArrayList<GetSessionDataReturn> data) {
         GetSessionReturn getSessionReturn = new GetSessionReturn(
-                0,
-                null
+                resultCode.getResultCode(),
+                version,
+                stackDepth,
+                data
         );
         return new GetSessionResponse(getSessionReturn);
     }
@@ -262,12 +318,71 @@ public class DSessService {
                 .remove(replicaName);
     }
 
-    private Session cacheSession(CreateSessionRequest createSessionRequest) {
+    private CreateSessionResponse cacheSession(CreateSessionRequest createSessionRequest) {
+        // Extract Session ID and verify whether the request contains data
         String sessionId = createSessionRequest.getSessionId();
-        LOG.finest("sessionid = " + sessionId);
+        if (sessionId == null || createSessionRequest.getData() == null) {
+            LOG.info("No session ID or data.");
+            return CreateSessionResponse.constructCreateSessionResponse(
+                    DSCResultCode.NOT_CREATED.getResultCode()
+            );
+        }
+        LOG.finest("Session ID = " + sessionId);
+        // Attempt to get the session from cache
+        Session cachedSession = getSessionFromCache(sessionId);
+        if (cachedSession != null) {
+            LOG.info("Session ID already exists.");
+            return CreateSessionResponse.constructCreateSessionResponse(
+                    DSCResultCode.NOT_CREATED.getResultCode()
+            );
+        }
+        // Now validate whether the replica set is valid
+        Replica cachedReplica = getReplicaFromCache(createSessionRequest.getReplica());
+        if (cachedReplica == null) {
+            LOG.info("cached replica is null.");
+            return CreateSessionResponse.constructCreateSessionResponse(
+                    DSCResultCode.REPLICA_SET_NOT_FOUND.getResultCode()
+            );
+        }
+        if (!cachedReplica.getReplicaSet().equalsIgnoreCase(createSessionRequest.getReplicaSet())) {
+            LOG.info("replica sets don't match.");
+            return CreateSessionResponse.constructCreateSessionResponse(
+                    DSCResultCode.REPLICA_SET_NOT_FOUND.getResultCode()
+            );
+        }
+        LOG.info("cached replica set = " + cachedReplica.getReplicaSet());
+        LOG.info("requested replica set = " + createSessionRequest.getReplicaSet());
+        // Validations succeeded, prepare to cache the session
         // Get the session inactivity timeout first
+        long lifetime = getSessionLifetime(createSessionRequest.getData());
+        LOG.finest("use session lifetime of " + lifetime);
+
+        // Construct the Session Object to be stored in Infinispan
+        cachedSession = new Session(
+                createSessionRequest.getSessionId(),
+                createSessionRequest.getReplicaSet(),
+                createSessionRequest.getSessionLimit(),
+                new ArrayList<>(createSessionRequest.getData())
+        );
+
+        if (lifetime == 0L) {
+            sessionsRemoteCache
+//                    .withFlags(Flag.FORCE_RETURN_VALUE) //this will make sure a value is returned, at the cost of marshalling
+                    .putIfAbsent(sessionId, cachedSession);
+
+        } else {
+            sessionsRemoteCache
+//                    .withFlags(Flag.FORCE_RETURN_VALUE) //this will make sure a value is returned, at the cost of marshalling
+                    .putIfAbsent(sessionId, cachedSession, lifetime, TimeUnit.SECONDS);
+        }
+        return CreateSessionResponse.constructCreateSessionResponse(
+                DSCResultCode.OK.getResultCode()
+        );
+    }
+
+    private long getSessionLifetime(List<SessionDataRequest> sessionDataRequestList) {
         AtomicReference<String> sessionInactivityTimeout = new AtomicReference<>();
-        createSessionRequest.getData().forEach(sessionDataRequest -> {
+        sessionDataRequestList.forEach(sessionDataRequest -> {
             if (sessionDataRequest.getDataClass().equalsIgnoreCase(DsessConstants.INACTIVITY_TIMEOUT)) {
                 sessionInactivityTimeout.set(sessionDataRequest.getValue());
             }
@@ -276,36 +391,28 @@ public class DSessService {
         long lifetime = 0L;
         try {
             lifetime = Long.parseLong(sessionInactivityTimeout.get().replaceFirst("0x", ""), 16);
-        } catch (NumberFormatException ignored) {
+        } catch (Exception ignored) {
 
         }
-        LOG.finest("use session lifetime of " + lifetime);
-
-        // Construct the Session Object to be stored in Infinispan
-        Session cachedSession = new Session(
-                createSessionRequest.getSessionId(),
-                createSessionRequest.getReplicaSet(),
-                createSessionRequest.getSessionLimit(),
-                new ArrayList<>(createSessionRequest.getData())
-        );
-
-        if (lifetime == 0L) {
-            return sessionsRemoteCache
-//                    .withFlags(Flag.FORCE_RETURN_VALUE) //this will make sure a value is returned, at the cost of marshalling
-                    .putIfAbsent(sessionId, cachedSession);
-        } else {
-            return sessionsRemoteCache
-//                    .withFlags(Flag.FORCE_RETURN_VALUE) //this will make sure a value is returned, at the cost of marshalling
-                    .putIfAbsent(sessionId, cachedSession, lifetime, TimeUnit.SECONDS);
-        }
+        return lifetime;
     }
 
     private Session getSessionFromCache(String sessionId) {
-        return sessionsRemoteCache.get(sessionId);
+        MetadataValue<Session> sessionMetadataValue = getSessionFromCacheWithMetadata(sessionId);
+        return sessionMetadataValue == null ? null : sessionMetadataValue.getValue();
     }
 
     private MetadataValue<Session> getSessionFromCacheWithMetadata(String sessionId) {
         return sessionsRemoteCache.getWithMetadata(sessionId);
+    }
+
+    private Replica getReplicaFromCache(String replica) {
+        MetadataValue<Replica> replicaMetadataValue = getReplicaFromCacheWithMetadata(replica);
+        return replicaMetadataValue == null ? null : replicaMetadataValue.getValue();
+    }
+
+    private MetadataValue<Replica> getReplicaFromCacheWithMetadata(String replica) {
+        return replicasRemoteCache.getWithMetadata(replica);
     }
 
 }

@@ -15,22 +15,23 @@
  * limitations under the License.
  */
 
-package be.cronos.services;
+package be.cronos.model;
 
-import be.cronos.model.DSCResultCode;
-import be.cronos.model.PingRequest;
-import be.cronos.model.PingResponse;
-import org.jboss.logmanager.Logger;
+public enum DSCResultCode {
+    OK(952467756),
+    NOT_CREATED(952467761),
+    REPLICA_SET_NOT_FOUND(952467762),
+    NOT_CHANGED(952467768),
+    INVALID_VERSION(952467788)
+    ;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.ws.rs.core.Response;
+    private final int resultCode;
 
-@ApplicationScoped
-public class PingService {
-    private static final Logger LOG = Logger.getLogger(PingService.class.getName());
-
-    public PingResponse pong(PingRequest pingRequest) {
-        return new PingResponse(DSCResultCode.OK.getResultCode());
+    DSCResultCode(int resultCode) {
+        this.resultCode = resultCode;
     }
 
+    public int getResultCode() {
+        return resultCode;
+    }
 }

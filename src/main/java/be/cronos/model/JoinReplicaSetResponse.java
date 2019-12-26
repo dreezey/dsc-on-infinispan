@@ -35,7 +35,6 @@ public class JoinReplicaSetResponse {
     }
 
     public JoinReplicaSetResponse() {
-        this.joinReplicaSetReturn = new JoinReplicaSetReturn();
     }
 
     public JoinReplicaSetReturn getJoinReplicaSetReturn() {
