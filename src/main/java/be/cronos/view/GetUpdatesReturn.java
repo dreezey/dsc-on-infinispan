@@ -28,7 +28,8 @@ import java.util.ArrayList;
         propOrder = {
                 "result",
                 "newKey",
-                "newKeyId"
+                "newKeyId",
+                "terminations"
         }
 )
 @XmlRootElement(name = "getUpdatesReturn", namespace = DsessConstants.SMS_NS)
@@ -40,10 +41,8 @@ public class GetUpdatesReturn {
     private String newKey;
     @XmlElement(name = "newKeyID", namespace = DsessConstants.SMS_NS)
     private int newKeyId;
-    /** TODO, there could be 2 more elements here:
-     *      <element maxOccurs="unbounded" name="updates" nillable="true" type="impl:SessionUpdate"/>
-     *      <element maxOccurs="unbounded" name="terminations" nillable="true" type="impl:SessionKey"/>
-     * */
+    @XmlElement(name = "terminations", namespace = DsessConstants.SMS_NS, nillable = true)
+    private ArrayList<TerminationsDataReturn> terminations;
 
     public GetUpdatesReturn() {
     }
@@ -52,6 +51,11 @@ public class GetUpdatesReturn {
         this.result = result;
         this.newKey = newKey;
         this.newKeyId = newKeyId;
+    }
+
+    public GetUpdatesReturn(int result, String newKey, int newKeyId, ArrayList<TerminationsDataReturn> terminations) {
+        this(result, newKey, newKeyId);
+        this.terminations = terminations;
     }
 
     public int getResult() {
@@ -76,5 +80,13 @@ public class GetUpdatesReturn {
 
     public void setNewKeyId(int newKeyId) {
         this.newKeyId = newKeyId;
+    }
+
+    public ArrayList<TerminationsDataReturn> getTerminations() {
+        return terminations;
+    }
+
+    public void setTerminations(ArrayList<TerminationsDataReturn> terminations) {
+        this.terminations = terminations;
     }
 }

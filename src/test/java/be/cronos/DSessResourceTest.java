@@ -106,6 +106,7 @@ public class DSessResourceTest {
     }
 
     @Test
+    @Order(1)
     public void testGetUpdatesEndpoint() {
         // Append the SOAP action
         Headers headers = XmlTestUtils.getSoapRequestHeaders(basicHeaders, "getUpdates");
@@ -160,7 +161,7 @@ public class DSessResourceTest {
     }
 
     @Test
-    @Order(1)
+    @Order(2)
     public void testJoinReplicaSetEndpoint() {
         // Append the SOAP action
         Headers headers = XmlTestUtils.getSoapRequestHeaders(basicHeaders, "joinReplicaSet");
@@ -214,7 +215,7 @@ public class DSessResourceTest {
     }
 
     @Test
-    @Order(2)
+    @Order(3)
     public void testReplicaShutdownEndpoint() {
         // Append the SOAP action
         Headers headers = XmlTestUtils.getSoapRequestHeaders(basicHeaders, "replicaShutdown");
@@ -309,7 +310,6 @@ public class DSessResourceTest {
     }
 
     @Test
-//    @Order(3)
     public void testCreateSessionEndpoint() {
         // When a session is created, the result code should be: 952467756.
         // When a session with that ID already exists: 952467761.
@@ -1499,5 +1499,161 @@ public class DSessResourceTest {
                         )
                         )
                 );
+    }
+
+    @Test
+    public void testSessionGraveyardEndpoint() {
+        int responseBy = 1;
+
+        String sessionId = "TEST_SESSION_GRAVEYARD_ID_123456789";
+
+        // Append the SOAP action
+        Headers createSession = XmlTestUtils.getSoapRequestHeaders(basicHeaders, "createSession");
+        Headers joinReplicaSet = XmlTestUtils.getSoapRequestHeaders(basicHeaders, "joinReplicaSet");
+        Headers replicaShutdown = XmlTestUtils.getSoapRequestHeaders(basicHeaders, "replicaShutdown");
+        Headers terminateSession = XmlTestUtils.getSoapRequestHeaders(basicHeaders, "terminateSession");
+        Headers getUpdates = XmlTestUtils.getSoapRequestHeaders(basicHeaders, "getUpdates");
+
+        // Custom replica settings
+        String GRAVEYARD_SESSIONS_REPLICA = "graveyard-sessions-webseald";
+        String GRAVEYARD_SESSIONS_REPLICA_SET = "graveyard-sessions-dsc";
+        String GRAVEYARD_SESSIONS_INSTANCE = "e1cbcdd6-d46b-11e9-9e4d-000c2974ca3a:graveyard-sessions-webseald";
+
+
+        List<SessionDataRequest> sessionDataRequestList = new ArrayList<>();
+        ArrayList<TerminationsDataReturn> terminations = new ArrayList<TerminationsDataReturn>() {{
+            add(new TerminationsDataReturn(GRAVEYARD_SESSIONS_REPLICA_SET, sessionId));
+        }};
+        sessionData.forEach(sessionData1 -> {
+            sessionDataRequestList.add(
+                    new SessionDataRequest(
+                            sessionData1.getDataClass(),
+                            sessionData1.getValue(),
+                            sessionData1.getInstance(),
+                            sessionData1.getChangePolicy()
+                    )
+            );
+        });
+
+
+        // Stringify the SOAP Request Envelope
+        String requestCreateSessionSoapMessage = XmlTestUtils.GetSoapMessage(
+                new CreateSessionRequest(
+                        GRAVEYARD_SESSIONS_REPLICA,
+                        GRAVEYARD_SESSIONS_REPLICA_SET,
+                        sessionId,
+                        0,
+                        sessionDataRequestList
+                ),
+                CreateSessionRequest.class
+        );
+        String getUpdatesRequestSoapMessage = XmlTestUtils.GetSoapMessage(
+                new GetUpdatesRequest(
+                        GRAVEYARD_SESSIONS_REPLICA,
+                        GRAVEYARD_SESSIONS_INSTANCE,
+                        null,
+                        responseBy
+                ),
+                GetUpdatesRequest.class
+        );
+
+        // Stringify the SOAP Response Envelope
+        String responseCreateSessionOkSoapMessage = XmlTestUtils.GetSoapMessage(
+                CreateSessionResponse.constructCreateSessionResponse(DSCResultCode.OK.getResultCode()),
+                CreateSessionResponse.class
+        );
+        String getUpdatesResponseSoapMessage = XmlTestUtils.GetSoapMessage(
+                new GetUpdatesResponse(
+                        new GetUpdatesReturn(
+                                DSCResultCode.OK.getResultCode(),
+                                DsessConstants.NEW_KEY,
+                                0,
+                                terminations
+                        )
+                ),
+                GetUpdatesResponse.class
+        );
+
+//        // Do the tests
+//        // Now create the session
+//        given()
+//                .when()
+//                .headers(joinReplicaSet)
+//                .auth().basic(BA_USER, BA_PASSWORD)
+//                .body(XmlTestUtils.GetSoapMessage(
+//                        new JoinReplicaSetRequest(
+//                                GRAVEYARD_SESSIONS_REPLICA,
+//                                GRAVEYARD_SESSIONS_INSTANCE,
+//                                15,
+//                                GRAVEYARD_SESSIONS_REPLICA_SET
+//                        ),
+//                        JoinReplicaSetRequest.class
+//                        )
+//                )
+//                .post("/DSess")
+//                .then()
+//                .statusCode(200);
+//        // Now create the session which we'll be terminating
+//        given()
+//                .when()
+//                .headers(createSession)
+//                .auth().basic(BA_USER, BA_PASSWORD)
+//                .body(requestCreateSessionSoapMessage)
+//                .post("/DSess")
+//                .then()
+//                .statusCode(200)
+//                .body(is(responseCreateSessionOkSoapMessage));
+//        // Terminate the session
+//        given()
+//                .when()
+//                .headers(terminateSession)
+//                .auth().basic(BA_USER, BA_PASSWORD)
+//                .body(XmlTestUtils.GetSoapMessage(
+//                        new TerminateSessionRequest(
+//                                GRAVEYARD_SESSIONS_REPLICA,
+//                                GRAVEYARD_SESSIONS_REPLICA_SET,
+//                                sessionId,
+//                                0,
+//                                0,
+//                                0
+//                        ),
+//                        TerminateSessionRequest.class
+//                        )
+//                )
+//                .post("/DSess")
+//                .then()
+//                .statusCode(200);
+//        // And perform getUpdates
+//        given()
+//                .when()
+//                .headers(getUpdates)
+//                .auth().basic(BA_USER, BA_PASSWORD)
+//                .body(getUpdatesRequestSoapMessage)
+//                .post("/DSess")
+//                .then()
+//                .statusCode(200)
+//                .body(is(getUpdatesResponseSoapMessage));
+//        // And shut down the replica
+//        given()
+//                .when()
+//                .headers(replicaShutdown)
+//                .auth().basic(BA_USER, BA_PASSWORD)
+//                .body(XmlTestUtils.GetSoapMessage(
+//                        new ReplicaShutdownRequest(GRAVEYARD_SESSIONS_REPLICA),
+//                        ReplicaShutdownRequest.class
+//                        )
+//                )
+//                .post("/DSess")
+//                .then()
+//                .statusCode(200)
+//                .body(is(
+//                        XmlTestUtils.GetSoapMessage(
+//                                new ReplicaShutdownResponse(
+//                                        DSCResultCode.OK.getResultCode()
+//                                ),
+//                                ReplicaShutdownResponse.class
+//                        )
+//                        )
+//                );
     }
 }

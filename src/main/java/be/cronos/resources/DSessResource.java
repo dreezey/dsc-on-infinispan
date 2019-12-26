@@ -18,7 +18,6 @@
 package be.cronos.resources;
 
 import be.cronos.DsessConstants;
-import be.cronos.services.GetUpdatesService;
 import be.cronos.services.PingService;
 import be.cronos.services.DSessService;
 import be.cronos.view.*;
@@ -40,8 +39,6 @@ public class DSessResource {
 
     @Inject
     PingService pingService;
-    @Inject
-    GetUpdatesService getUpdatesService;
     @Inject
     DSessService DSessService;
 
@@ -81,7 +78,7 @@ public class DSessResource {
 
         // Schedule based on requested responseBy
         executor.schedule(
-                () -> { ar.resume(getUpdatesService.getUpdates(getUpdatesRequest)); },
+                () -> { ar.resume(DSessService.getUpdates(getUpdatesRequest)); },
                 responseBy,
                 TimeUnit.SECONDS
         );
@@ -150,7 +147,7 @@ public class DSessResource {
     public CompletionStage<GetSessionResponse> getSession(GetSessionRequest getSessionRequest) {
         LOG.entering(DSessResource.class.getName(), "getSession");
         LOG.finest("getSession()");
-        LOG.finest(getSessionRequest.toString());
+        LOG.info(getSessionRequest.toString());
 
         return CompletableFuture.supplyAsync(() -> {
             return DSessService.getSession(getSessionRequest);

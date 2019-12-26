@@ -18,12 +18,15 @@
 package be.cronos.services;
 
 import be.cronos.DsessConstants;
+import be.cronos.model.ispn.GraveyardSession;
 import be.cronos.model.ispn.Replica;
 import be.cronos.model.ispn.Session;
 import be.cronos.model.ispn.SessionData;
 import be.cronos.view.*;
 import io.quarkus.infinispan.client.Remote;
 import org.infinispan.client.hotrod.*;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.jboss.logmanager.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -44,6 +47,55 @@ public class DSessService {
     @Inject
     @Remote("sessions")
     RemoteCache<String, Session> sessionsRemoteCache;
+    @Inject
+    @Remote("graveyard")
+    RemoteCache<String, GraveyardSession> graveyardRemoteCache;
+
+    public GetUpdatesResponse getUpdates(GetUpdatesRequest getUpdatesRequest) {
+        return new GetUpdatesResponse(
+                    new GetUpdatesReturn(
+                            DSCResultCode.OK.getResultCode(),
+                            DsessConstants.NEW_KEY,
+                            0
+                    )
+            );
+//        Replica cachedReplica = getReplicaFromCache(getUpdatesRequest.getReplica());
+//        if (cachedReplica == null) {
+//            LOG.warning("Replica '" + getUpdatesRequest.getReplica() + "' is not registered.");
+//            return new GetUpdatesResponse(
+//                    new GetUpdatesReturn(
+//                            DSCResultCode.OK.getResultCode(),
+//                            DsessConstants.NEW_KEY,
+//                            0
+//                    )
+//            );
+//        }
+//        String replicaSet = cachedReplica.getReplicaSet();
+//        List<GraveyardSession> graveyardSessions = getGraveyardSessions(replicaSet);
+//        ArrayList<TerminationsDataReturn> terminations;
+//        if (graveyardSessions == null || graveyardSessions.size() == 0) {
+//            LOG.fine("There are no sessions in the graveyard.");
+//            terminations = null;
+//        } else {
+//            LOG.fine("Found sessions in the graveyard.");
+//            terminations = new ArrayList<>();
+//            graveyardSessions.forEach(graveyardSession -> {
+//                terminations.add(new TerminationsDataReturn(
+//                        replicaSet,
+//                        graveyardSession.getSessionId()
+//                ));
+//            });
+//
+//        }
+//        return new GetUpdatesResponse(
+//                new GetUpdatesReturn(
+//                        DSCResultCode.OK.getResultCode(),
+//                        DsessConstants.NEW_KEY,
+//                        0,
+//                        terminations
+//                )
+//        );
+    }
 
     public JoinReplicaSetResponse joinReplicaSet(JoinReplicaSetRequest joinReplicaSetRequest) {
         Replica replica = attemptCacheReplica(joinReplicaSetRequest);
@@ -62,9 +114,9 @@ public class DSessService {
         Replica removedReplica = shutdownReplica(replicaShutdownRequest.getReplica());
 
         if (removedReplica == null) {
-            LOG.info("replica was not in cache anyway");
+            LOG.fine("replica was not in cache anyway");
         } else {
-            LOG.info("replica removed from cache.");
+            LOG.fine("replica removed from cache.");
         }
         return new ReplicaShutdownResponse(
                 DSCResultCode.OK.getResultCode()
@@ -120,15 +172,15 @@ public class DSessService {
         Session cachedSession = getSessionFromCache(sessionId);
         GetSessionResponse getSessionResponse;
         if (cachedSession == null) {
-            LOG.fine("no cached session found with ID: " + sessionId);
+            LOG.info("no cached session found with ID: " + sessionId);
             return constructGetSessionResponse(
-                    DSCResultCode.NOT_CHANGED,
+                    DSCResultCode.OK,
                     0,
                     1,
                     null
             );
         } else {
-            LOG.fine("Session found in cache: " + sessionId);
+            LOG.info("Session found in cache: " + sessionId);
             ArrayList<GetSessionDataReturn> getSessionDataReturn = new ArrayList<>();
             cachedSession.getSessionData().forEach(sessionData -> {
                 getSessionDataReturn.add(new GetSessionDataReturn(
@@ -228,7 +280,6 @@ public class DSessService {
     }
 
     private DSCResultCode terminateSession(String sessionId, String replica, String replicaSet) {
-        // TODO when terminating a session, it should be added to a graveyard of some sort to let "getUpdates" know.
         if (sessionId == null) {
             LOG.warning("Terminating a session with missing session id, ignoring request...");
             return DSCResultCode.NOT_CHANGED;
@@ -254,7 +305,30 @@ public class DSessService {
         LOG.finest("Removing session: " + sessionId);
         sessionsRemoteCache.remove(sessionId);
 
+        markSessionAsDead(sessionId, replicaSet);
+
         return DSCResultCode.OK;
+    }
+
+    private void markSessionAsDead(String sessionId, String replicaSet) {
+        graveyardRemoteCache.putIfAbsentAsync(
+                sessionId,
+                new GraveyardSession(
+                        sessionId,
+                        replicaSet
+                ),
+                2,
+                TimeUnit.MINUTES
+        );
+    }
+
+    private List<GraveyardSession> getGraveyardSessions(String replicaSet) {
+        QueryFactory queryFactory = Search.getQueryFactory(graveyardRemoteCache);
+        Query query = queryFactory
+                .from(GraveyardSession.class)
+                .having("replicaSet").eq(replicaSet)
+                .build();
+        return query.list();
     }
 
     private int findIndexOfSessionAttribute(ArrayList<SessionData> sourceSessionData, String dataClass) {
@@ -322,16 +396,16 @@ public class DSessService {
         // Extract Session ID and verify whether the request contains data
         String sessionId = createSessionRequest.getSessionId();
         if (sessionId == null || createSessionRequest.getData() == null) {
-            LOG.info("No session ID or data.");
+            LOG.warning("No session ID or data when attempting to create a new session.");
             return CreateSessionResponse.constructCreateSessionResponse(
                     DSCResultCode.NOT_CREATED.getResultCode()
             );
         }
-        LOG.finest("Session ID = " + sessionId);
+        LOG.fine("Session ID = " + sessionId);
         // Attempt to get the session from cache
         Session cachedSession = getSessionFromCache(sessionId);
         if (cachedSession != null) {
-            LOG.info("Session ID already exists.");
+            LOG.warning("Session ID already exists.");
             return CreateSessionResponse.constructCreateSessionResponse(
                     DSCResultCode.NOT_CREATED.getResultCode()
             );
@@ -339,23 +413,21 @@ public class DSessService {
         // Now validate whether the replica set is valid
         Replica cachedReplica = getReplicaFromCache(createSessionRequest.getReplica());
         if (cachedReplica == null) {
-            LOG.info("cached replica is null.");
+            LOG.warning("cached replica is null.");
             return CreateSessionResponse.constructCreateSessionResponse(
                     DSCResultCode.REPLICA_SET_NOT_FOUND.getResultCode()
             );
         }
         if (!cachedReplica.getReplicaSet().equalsIgnoreCase(createSessionRequest.getReplicaSet())) {
-            LOG.info("replica sets don't match.");
+            LOG.warning("replica sets don't match.");
             return CreateSessionResponse.constructCreateSessionResponse(
                     DSCResultCode.REPLICA_SET_NOT_FOUND.getResultCode()
             );
         }
-        LOG.info("cached replica set = " + cachedReplica.getReplicaSet());
-        LOG.info("requested replica set = " + createSessionRequest.getReplicaSet());
         // Validations succeeded, prepare to cache the session
         // Get the session inactivity timeout first
         long lifetime = getSessionLifetime(createSessionRequest.getData());
-        LOG.finest("use session lifetime of " + lifetime);
+        LOG.fine("use session lifetime of " + lifetime);
 
         // Construct the Session Object to be stored in Infinispan
         cachedSession = new Session(
