@@ -15,14 +15,31 @@
  * limitations under the License.
  */
 
-package be.cronos;
+package be.cronos.view;
 
-public interface DsessConstants {
-    String SMS_NS = "http://sms.am.tivoli.com";
-    String XSD_NS = "http://www.w3.org/2001/XMLSchema";
-    String XSI_NS = "http://www.w3.org/2001/XMLSchema-instance";
-    String NEW_KEY = "iuhew9873hkediuyer987";
-    String CUSTOM_XML_MIMETYPE = "custom/xml";
-    String REALM_NAME = "ISAM-Distributed-Session-Cache";
-    String INACTIVITY_TIMEOUT = "com.tivoli.am.webseal.inactivity-timeout";
+import be.cronos.DsessConstants;
+
+import javax.xml.bind.annotation.*;
+
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlRootElement(name = "pingResponse", namespace = DsessConstants.SMS_NS)
+public class PingResponse {
+    @XmlElement(name = "pingReturn", namespace = DsessConstants.SMS_NS)
+    private int pingReturn;
+
+    public PingResponse(int pingReturn) {
+        this.pingReturn = pingReturn;
+    }
+
+    public PingResponse() {
+
+    }
+
+    public int getPingReturn() {
+        return pingReturn;
+    }
+
+    public void setPingReturn(int pingReturn) {
+        this.pingReturn = pingReturn;
+    }
 }

@@ -18,10 +18,10 @@
 package be.cronos.resources;
 
 import be.cronos.DsessConstants;
-import be.cronos.model.*;
 import be.cronos.services.GetUpdatesService;
 import be.cronos.services.PingService;
 import be.cronos.services.DSessService;
+import be.cronos.view.*;
 import org.jboss.logmanager.Logger;
 
 import javax.annotation.security.PermitAll;

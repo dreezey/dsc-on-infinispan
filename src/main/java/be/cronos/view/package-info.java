@@ -15,14 +15,15 @@
  * limitations under the License.
  */
 
-package be.cronos;
+@XmlSchema(
+        xmlns = {
+                @XmlNs(prefix = "ns1", namespaceURI = "http://sms.am.tivoli.com"),
+                @XmlNs(prefix = "SOAP-ENV", namespaceURI = "http://schemas.xmlsoap.org/soap/envelope/"),
+                @XmlNs(prefix = "xsi", namespaceURI = "http://www.w3.org/2001/XMLSchema-instance")
+        },
+        elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED
+)
+package be.cronos.view;
 
-public interface DsessConstants {
-    String SMS_NS = "http://sms.am.tivoli.com";
-    String XSD_NS = "http://www.w3.org/2001/XMLSchema";
-    String XSI_NS = "http://www.w3.org/2001/XMLSchema-instance";
-    String NEW_KEY = "iuhew9873hkediuyer987";
-    String CUSTOM_XML_MIMETYPE = "custom/xml";
-    String REALM_NAME = "ISAM-Distributed-Session-Cache";
-    String INACTIVITY_TIMEOUT = "com.tivoli.am.webseal.inactivity-timeout";
-}
+import javax.xml.bind.annotation.XmlNs;
+import javax.xml.bind.annotation.XmlSchema;

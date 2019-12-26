@@ -18,14 +18,13 @@
 package be.cronos.services;
 
 import be.cronos.DsessConstants;
-import be.cronos.model.DSCResultCode;
-import be.cronos.model.GetUpdatesRequest;
-import be.cronos.model.GetUpdatesResponse;
-import be.cronos.model.GetUpdatesReturn;
+import be.cronos.view.DSCResultCode;
+import be.cronos.view.GetUpdatesRequest;
+import be.cronos.view.GetUpdatesResponse;
+import be.cronos.view.GetUpdatesReturn;
 import org.jboss.logmanager.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.ws.rs.core.Response;
 
 @ApplicationScoped
 public class GetUpdatesService {

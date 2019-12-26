@@ -17,13 +17,12 @@
 
 package be.cronos.services;
 
-import be.cronos.model.DSCResultCode;
-import be.cronos.model.PingRequest;
-import be.cronos.model.PingResponse;
+import be.cronos.view.DSCResultCode;
+import be.cronos.view.PingRequest;
+import be.cronos.view.PingResponse;
 import org.jboss.logmanager.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.ws.rs.core.Response;
 
 @ApplicationScoped
 public class PingService {

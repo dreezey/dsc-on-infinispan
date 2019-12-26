@@ -18,10 +18,10 @@
 package be.cronos.services;
 
 import be.cronos.DsessConstants;
-import be.cronos.model.*;
 import be.cronos.model.ispn.Replica;
 import be.cronos.model.ispn.Session;
 import be.cronos.model.ispn.SessionData;
+import be.cronos.view.*;
 import io.quarkus.infinispan.client.Remote;
 import org.infinispan.client.hotrod.*;
 import org.jboss.logmanager.Logger;

@@ -17,9 +17,9 @@
 
 package be.cronos;
 
-import be.cronos.model.*;
 import be.cronos.model.ispn.SessionData;
 import be.cronos.util.XmlTestUtils;
+import be.cronos.view.*;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
