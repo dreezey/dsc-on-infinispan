@@ -33,7 +33,7 @@ public class GraveyardSession {
         this.replicaSet = replicaSet;
     }
 
-    @ProtoField(number = 1)
+    @ProtoField(number = 1, required = true)
     public String getSessionId() {
         return sessionId;
     }
@@ -42,7 +42,7 @@ public class GraveyardSession {
         this.sessionId = sessionId;
     }
 
-    @ProtoField(number = 2)
+    @ProtoField(number = 2, required = true)
     public String getReplicaSet() {
         return replicaSet;
     }

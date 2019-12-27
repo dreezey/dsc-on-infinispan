@@ -50,7 +50,7 @@ public class Session {
         );
     }
 
-    @ProtoField(number = 1)
+    @ProtoField(number = 1, required = true)
     public String getSessionId() {
         return sessionId;
     }
@@ -59,7 +59,7 @@ public class Session {
         this.sessionId = sessionId;
     }
 
-    @ProtoField(number = 2)
+    @ProtoField(number = 2, required = true)
     public String getReplicaSet() {
         return replicaSet;
     }

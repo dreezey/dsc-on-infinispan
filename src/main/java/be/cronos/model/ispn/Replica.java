@@ -36,7 +36,7 @@ public class Replica {
         this.replicaSet = Objects.requireNonNull(replicaSet);
     }
 
-    @ProtoField(number = 1)
+    @ProtoField(number = 1, required = true)
     public String getReplica() {
         return replica;
     }
@@ -45,7 +45,7 @@ public class Replica {
         this.replica = replica;
     }
 
-    @ProtoField(number = 2)
+    @ProtoField(number = 2, required = true)
     public String getInstance() {
         return instance;
     }
@@ -63,7 +63,7 @@ public class Replica {
         this.capabilities = capabilities;
     }
 
-    @ProtoField(number = 4)
+    @ProtoField(number = 4, required = true)
     public String getReplicaSet() {
         return replicaSet;
     }
