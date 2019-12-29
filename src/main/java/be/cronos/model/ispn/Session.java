@@ -21,7 +21,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 public class Session {
@@ -29,16 +28,18 @@ public class Session {
     private String replicaSet;
     private int sessionLimit;
     private ArrayList<SessionData> sessionData;
+    private int version;
 
     public Session() {
     }
 
     @ProtoFactory
-    public Session(String sessionId, String replicaSet, int sessionLimit, ArrayList<SessionData> sessionData) {
+    public Session(String sessionId, String replicaSet, int sessionLimit, ArrayList<SessionData> sessionData, int version) {
         this.sessionId = Objects.requireNonNull(sessionId);
         this.replicaSet = Objects.requireNonNull(replicaSet);
         this.sessionLimit = sessionLimit;
         this.sessionData = Objects.requireNonNull(sessionData);
+        this.version = version;
     }
 
     public static Session shallowCopy(Session sourceSession) {
@@ -46,7 +47,8 @@ public class Session {
                 sourceSession.sessionId,
                 sourceSession.replicaSet,
                 sourceSession.sessionLimit,
-                sourceSession.getSessionData()
+                sourceSession.getSessionData(),
+                sourceSession.version
         );
     }
 
@@ -86,6 +88,15 @@ public class Session {
         this.sessionLimit = sessionLimit;
     }
 
+    @ProtoField(number = 5, defaultValue = "0")
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
     @Override
     public String toString() {
         return "Session{" +
@@ -93,6 +104,7 @@ public class Session {
                 ", replicaSet='" + replicaSet + '\'' +
                 ", sessionLimit=" + sessionLimit +
                 ", sessionData=" + sessionData +
+                ", version=" + version +
                 '}';
     }
 }

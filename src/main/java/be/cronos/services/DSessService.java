@@ -192,7 +192,7 @@ public class DSessService {
             });
             return constructGetSessionResponse(
                     DSCResultCode.OK,
-                    0,
+                    cachedSession.getVersion(),
                     1,
                     getSessionDataReturn
             );
@@ -227,17 +227,17 @@ public class DSessService {
     public ChangeSessionResponse changeSession(ChangeSessionRequest changeSessionRequest) {
         if (changeSessionRequest.getSessionId() == null || changeSessionRequest.getData() == null) {
             LOG.warning("Updating a session with no new data or missing session id, ignoring request...");
-            return constructChangeSessionResponse(changeSessionRequest.getVersion(), false, DSCResultCode.NOT_CHANGED);
+            return constructChangeSessionResponse(changeSessionRequest.getVersion(), DSCResultCode.NOT_CHANGED);
         }
         // Now validate whether the replica set is valid
         Replica cachedReplica = getReplicaFromCache(changeSessionRequest.getReplica());
         if (cachedReplica == null) {
             LOG.warning("cached replica is null.");
-            return constructChangeSessionResponse(changeSessionRequest.getVersion(), false, DSCResultCode.REPLICA_SET_NOT_FOUND);
+            return constructChangeSessionResponse(changeSessionRequest.getVersion(), DSCResultCode.REPLICA_SET_NOT_FOUND);
         }
         if (!cachedReplica.getReplicaSet().equalsIgnoreCase(changeSessionRequest.getReplicaSet())) {
             LOG.warning("replica sets don't match.");
-            return constructChangeSessionResponse(changeSessionRequest.getVersion(), false, DSCResultCode.REPLICA_SET_NOT_FOUND);
+            return constructChangeSessionResponse(changeSessionRequest.getVersion(), DSCResultCode.REPLICA_SET_NOT_FOUND);
         }
         String sessionId = changeSessionRequest.getSessionId();
         MetadataValue<Session> cachedSessionWithMetadata = getSessionFromCacheWithMetadata(sessionId);
@@ -245,17 +245,18 @@ public class DSessService {
         ChangeSessionResponse changeSessionResponse;
         if (cachedSessionWithMetadata == null) {
             LOG.warning("No associated session was found for key: " + sessionId);
-            changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), false, DSCResultCode.NOT_CHANGED);
+            changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), DSCResultCode.NOT_CHANGED);
         } else {
             LOG.finest("Found a session in cache for key: " + sessionId);
             Session cachedSession = cachedSessionWithMetadata.getValue();
             if (cachedSession == null) {
                 LOG.severe("Session ID yielded data, but Session appears to be null, this should not occur.");
-                changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), false, DSCResultCode.NOT_CHANGED);
+                changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), DSCResultCode.NOT_CHANGED);
             } else {
                 Session updatedSession = Session.shallowCopy(cachedSession);
                 // Update normal properties first
                 updatedSession.setSessionLimit(changeSessionRequest.getSessionLimit());
+                updatedSession.setVersion(cachedSession.getVersion() + 1);
                 // And now we'll update the data
                 for (SessionDataRequest sessionDataRequest : changeSessionRequest.getData()) {
                     int indexToModify = findIndexOfSessionAttribute(updatedSession.getSessionData(), sessionDataRequest.getDataClass());
@@ -272,7 +273,7 @@ public class DSessService {
                 // And finally update the remote cache
                 sessionsRemoteCache.replace(sessionId, updatedSession, cachedSessionWithMetadata.getLifespan(), TimeUnit.SECONDS);
                 // Prepare the ChangeSessionResponse
-                changeSessionResponse = constructChangeSessionResponse(changeSessionRequest.getVersion(), true, DSCResultCode.OK);
+                changeSessionResponse = constructChangeSessionResponse(updatedSession.getVersion(), DSCResultCode.OK);
             }
         }
 
@@ -331,6 +332,12 @@ public class DSessService {
         return query.list();
     }
 
+    /**
+     * Attempts to get the index of a SessionData object in the ArrayList of given "dataClass".
+     * @param sourceSessionData The session data to look into.
+     * @param dataClass The key we're looking for
+     * @return either the actual index, which is between 0-Integer.MAX_VALUE, or -1 indicating it does not exist.
+     */
     private int findIndexOfSessionAttribute(ArrayList<SessionData> sourceSessionData, String dataClass) {
         for (int i=0; i < sourceSessionData.size(); i++) {
             SessionData sessionData = sourceSessionData.get(i);
@@ -341,24 +348,14 @@ public class DSessService {
         return -1;
     }
 
-    private ChangeSessionResponse constructChangeSessionResponse(int version, boolean updated, DSCResultCode resultCode) {
-        ChangeSessionReturn changeSessionReturn;
+    private ChangeSessionResponse constructChangeSessionResponse(int version, DSCResultCode resultCode) {
         boolean clearOnReadDataPresent = false;
-        if (updated) {
-            changeSessionReturn = new ChangeSessionReturn(
-                    resultCode.getResultCode(),
-                    version + 1,
-                    1,
-                    clearOnReadDataPresent
-            );
-        } else {
-            changeSessionReturn = new ChangeSessionReturn(
-                    resultCode.getResultCode(),
-                    version,
-                    1,
-                    clearOnReadDataPresent
-            );
-        }
+        ChangeSessionReturn changeSessionReturn = new ChangeSessionReturn(
+                resultCode.getResultCode(),
+                version,
+                1,
+                clearOnReadDataPresent
+        );
         return new ChangeSessionResponse(changeSessionReturn);
     }
 
@@ -434,7 +431,8 @@ public class DSessService {
                 createSessionRequest.getSessionId(),
                 createSessionRequest.getReplicaSet(),
                 createSessionRequest.getSessionLimit(),
-                new ArrayList<>(createSessionRequest.getData())
+                new ArrayList<>(createSessionRequest.getData()),
+                0
         );
 
         if (lifetime == 0L) {

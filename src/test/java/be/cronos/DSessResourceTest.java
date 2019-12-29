@@ -516,6 +516,7 @@ public class DSessResourceTest {
         // Changing a session with an invalid version result in: 952467788.
         // When providing a wrong replica set: 952467762.
         String sessionId = "TEST_CHANGE_SESSION_ID_123456789";
+        ArrayList<GetSessionDataReturn> allUpdatedSessionData = new ArrayList<>();
         List<SessionDataRequest> createSessionData = new ArrayList<>();
         sessionData.forEach(sessionData1 -> {
             createSessionData.add(
@@ -526,11 +527,27 @@ public class DSessResourceTest {
                             sessionData1.getChangePolicy()
                     )
             );
+            allUpdatedSessionData.add(new GetSessionDataReturn(
+                    sessionData1.getDataClass(),
+                    sessionData1.getValue(),
+                    sessionData1.getInstance(),
+                    sessionData1.getChangePolicy()
+            ));
         });
 
         List<SessionDataRequest> changeSessionDataList = new ArrayList<SessionDataRequest>() {{
             add(new SessionDataRequest("change.session", "yes", "sms", 0));
         }};
+
+        changeSessionDataList.forEach(sessionDataRequest -> {
+            allUpdatedSessionData.add(new GetSessionDataReturn(
+                    sessionDataRequest.getDataClass(),
+                    sessionDataRequest.getValue(),
+                    sessionDataRequest.getInstance(),
+                    sessionDataRequest.getChangePolicy()
+            ));
+        });
+
 
         // Append the SOAP action
         Headers createSession = XmlTestUtils.getSoapRequestHeaders(basicHeaders, "createSession");
@@ -538,6 +555,7 @@ public class DSessResourceTest {
         Headers joinReplicaSet = XmlTestUtils.getSoapRequestHeaders(basicHeaders, "joinReplicaSet");
         Headers replicaShutdown = XmlTestUtils.getSoapRequestHeaders(basicHeaders, "replicaShutdown");
         Headers terminateSession = XmlTestUtils.getSoapRequestHeaders(basicHeaders, "terminateSession");
+        Headers getSession = XmlTestUtils.getSoapRequestHeaders(basicHeaders, "getSession");
 
         // Custom replica settings
         String CHANGE_SESSION_REPLICA = "change-session-webseald";
@@ -603,17 +621,15 @@ public class DSessResourceTest {
                 ),
                 ChangeSessionRequest.class
         );
-        String requestChangeSessionWrongReplicaSetSoapMessage = XmlTestUtils.GetSoapMessage(
-                new ChangeSessionRequest(
+        String requestGetUpdatedSessionSoapMessage = XmlTestUtils.GetSoapMessage(
+                new GetSessionRequest(
                         CHANGE_SESSION_REPLICA,
-                        "doesntexist",
+                        CHANGE_SESSION_REPLICA_SET,
                         sessionId,
-                        0,
-                        false,
-                        0,
-                        changeSessionDataList
+                        "local",
+                        null
                 ),
-                ChangeSessionRequest.class
+                GetSessionRequest.class
         );
 
         // Stringify the SOAP Response Envelopes
@@ -653,6 +669,17 @@ public class DSessResourceTest {
                         )
                 ),
                 ChangeSessionResponse.class
+        );
+        String responseGetUpdatedSessionSoapMessage = XmlTestUtils.GetSoapMessage(
+                new GetSessionResponse(
+                        new GetSessionReturn(
+                                DSCResultCode.OK.getResultCode(),
+                                1,
+                                1,
+                                allUpdatedSessionData
+                        )
+                ),
+                GetSessionResponse.class
         );
 
 
@@ -730,6 +757,7 @@ public class DSessResourceTest {
                 .then()
                 .statusCode(200)
                 .body(is(responseCreateSessionOkSoapMessage));
+        // And modify the session
         given()
                 .when()
                 .headers(changeSession)
@@ -739,6 +767,16 @@ public class DSessResourceTest {
                 .then()
                 .statusCode(200)
                 .body(is(responseChangeSessionOkSoapMessage));
+        // The version should be updated
+        given()
+                .when()
+                .headers(getSession)
+                .auth().basic(BA_USER, BA_PASSWORD)
+                .body(requestGetUpdatedSessionSoapMessage)
+                .post("/DSess")
+                .then()
+                .statusCode(200)
+                .body(is(responseGetUpdatedSessionSoapMessage));
         // clean the session up
         given()
                 .when()
