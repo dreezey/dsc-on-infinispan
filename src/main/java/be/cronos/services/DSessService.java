@@ -174,7 +174,7 @@ public class DSessService {
         if (cachedSession == null) {
             LOG.info("no cached session found with ID: " + sessionId);
             return constructGetSessionResponse(
-                    DSCResultCode.OK,
+                    DSCResultCode.NOT_CHANGED,
                     0,
                     1,
                     null
